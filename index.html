@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Acceso Productores - App Contable Agrícola</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com" rel="preconnect" />
+  <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&amp;display=swap"
+    rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#137fec",
+            "background-light": "#f6f7f8",
+            "background-dark": "#101922",
+          },
+          fontFamily: {
+            "display": ["Manrope", "sans-serif"]
+          },
+          borderRadius: {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+        },
+      },
+    }
+  </script>
+  <link rel="stylesheet" href="assets/styles.css" />
+</head>
+
+<body class="font-display">
+  <div
+    class="relative flex h-auto min-h-screen w-full flex-col bg-background-light dark:bg-background-dark group/design-root overflow-x-hidden"
+    style='font-family: Manrope, "Noto Sans", sans-serif;'>
+    <div class="layout-container flex h-full grow flex-col">
+      <div class="px-4 flex flex-1 justify-center items-center py-10 sm:py-20">
+        <div class="layout-content-container flex flex-col w-full max-w-md flex-1">
+          <div class="flex flex-col items-center justify-center gap-8">
+            <div class="flex flex-col items-center gap-2">
+              <div class="flex items-center justify-center p-2 bg-primary/10 rounded-xl">
+                <svg class="text-primary h-16 w-16" fill="none" height="64" stroke="currentColor" stroke-linecap="round"
+                  stroke-linejoin="round" stroke-width="1.5" viewBox="0 0 24 24" width="64"
+                  xmlns="http://www.w3.org/2000/svg">
+                  <path d="M11 15h2a2 2 0 1 0 0-4h-3c-.6 0-1.1.2-1.4.6L3 17"></path>
+                  <path d="M7 21v-2a2 2 0 1 1 4 0v2"></path>
+                  <path d="M21 17l-3.4-6.4a1.1 1.1 0 0 0-1.8 0L12.5 15H11"></path>
+                  <path d="M4.2 11.2 3 9"></path>
+                  <path d="M12 21a9 9 0 0 0 9-9"></path>
+                  <path d="M3.2 5.2A9 9 0 0 1 12 3"></path>
+                </svg>
+              </div>
+              <div class="flex min-w-72 flex-col gap-3 text-center">
+                <p class="text-slate-900 dark:text-white text-4xl font-black leading-tight tracking-[-0.033em]">Acceso a
+                  Productores</p>
+                <p class="text-slate-500 dark:text-slate-400 text-base font-normal leading-normal">Ingrese los datos de
+                  su parcela para continuar</p>
+              </div>
+            </div>
+            <div class="flex w-full flex-col gap-4">
+              <label class="flex flex-col w-full">
+                <p class="text-slate-900 dark:text-white text-base font-medium leading-normal pb-2">Correo del productor
+                </p>
+                <div class="relative flex w-full flex-1 items-stretch">
+                  <span
+                    class="material-symbols-outlined text-slate-400 dark:text-slate-500 absolute left-3 top-1/2 -translate-y-1/2">mail</span>
+                  <input
+                    class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-slate-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-300 dark:border-slate-700 bg-white dark:bg-background-dark h-14 placeholder:text-slate-500 dark:placeholder:text-slate-400 pl-11 pr-4 text-base font-normal leading-normal"
+                    placeholder="su.correo@ejemplo.com" type="email" value="" />
+                </div>
+              </label>
+              <label class="flex flex-col w-full">
+                <p class="text-slate-900 dark:text-white text-base font-medium leading-normal pb-2">Contraseña</p>
+                <div class="relative flex w-full flex-1 items-stretch">
+                  <span
+                    class="material-symbols-outlined text-slate-400 dark:text-slate-500 absolute left-3 top-1/2 -translate-y-1/2">lock</span>
+                  <input
+                    class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-slate-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-300 dark:border-slate-700 bg-white dark:bg-background-dark h-14 placeholder:text-slate-500 dark:placeholder:text-slate-400 pl-11 pr-11 text-base font-normal leading-normal"
+                    placeholder="Ingrese su contraseña" type="password" value="" />
+                  <button aria-label="Mostrar u ocultar contraseña"
+                    class="text-slate-500 dark:text-slate-400 absolute right-3 top-1/2 -translate-y-1/2">
+                    <span class="material-symbols-outlined">visibility</span>
+                  </button>
+                </div>
+              </label>
+              <div class="flex justify-end">
+          <a class="text-primary dark:text-primary/90 hover:underline text-sm font-medium leading-normal"
+            href="configuraciones.html">¿Olvidaste tu contraseña?</a>
+              </div>
+              <button
+                class="flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap px-6 py-4 text-base font-semibold leading-none text-white rounded-lg bg-primary hover:bg-primary/90 transition-colors w-full h-14">Iniciar
+                sesión</button>
+            </div>
+            <div class="flex items-center gap-2">
+              <p class="text-slate-500 dark:text-slate-400 text-sm font-normal leading-normal">¿Es su primera vez aquí?
+              </p>
+              <a class="text-primary dark:text-primary/90 hover:underline text-sm font-semibold leading-normal"
+                href="configuraciones.html">Crear cuenta</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+
+    <script src="js/app.js"></script>
+
+  </html>

@@ -1,0 +1,30 @@
+/* Archivo centralizado de estilos extraídos de los HTML */
+/* Material Symbols (variación por defecto) */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* Icono del logo (usa currentColor para que herede color) */
+.icon-grass {
+  fill: currentColor;
+}
+
+/* Asegurar la fuente por defecto en páginas que la usan directamente */
+body {
+  font-family: 'Manrope', sans-serif;
+}
+
+/* Suavizado de fuentes para compatibilidad cross-browser */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Clase helper: tamaño de avatar/elementos (si el proyecto no la define en otro lado) */
+.size-8 { width: 2rem; height: 2rem; }
+.size-10 { width: 2.5rem; height: 2.5rem; }
+
+/* Pequeña corrección visual para el header email */
+.app-header-email { opacity: 0.9; }
+
+/* Fin de styles.css */

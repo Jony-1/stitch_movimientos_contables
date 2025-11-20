@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Gestión de Facturas</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com" rel="preconnect" />
+  <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&amp;display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#137fec",
+            "background-light": "#f6f7f8",
+            "background-dark": "#101922",
+          },
+          fontFamily: {
+            "display": ["Manrope", "sans-serif"]
+          },
+          borderRadius: {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+        },
+      },
+    }
+  </script>
+  <link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-gray-800 dark:text-gray-200">
+  <div class="relative flex h-auto min-h-screen w-full flex-col">
+    <div class="flex h-full min-h-screen">
+      <aside
+        class="flex h-screen min-h-full w-64 flex-col justify-between border-r border-slate-200 bg-white p-4 font-display dark:border-slate-800 dark:bg-background-dark sticky top-0">
+        <div class="flex flex-col gap-8">
+          <div class="flex items-center gap-3 px-2">
+            <div class="size-8 text-primary">
+              <svg class="icon-grass" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M20,22H4a1,1,0,0,1,0-2H20a1,1,0,0,1,0,2Zm-1-3.68a1,1,0,0,0-1,.12L16.27,20H7.73l-1.74-1.56a1,1,0,0,0-1.28,1.54L6.15,21a1,1,0,0,0,.85.5h8a1,1,0,0,0,.85-.5l1.44-1.28A1,1,0,0,0,19,18.32ZM12,14.5A5.5,5.5,0,1,1,17.5,9,5.51,5.51,0,0,1,12,14.5Zm0-9A3.5,3.5,0,1,0,15.5,9,3.5,3.5,0,0,0,12,5.5ZM6.5,10.5a4.5,4.5,0,1,1,4-4.47V2.5a1,1,0,0,0-2,0V6A4.49,4.49,0,0,1,6.5,10.5Zm0-7A2.5,2.5,0,1,0,9,6,2.5,2.5,0,0,0,6.5,3.5Zm11,7a4.5,4.5,0,1,1,4-4.47V2.5a1,1,0,1,0-2,0V6A4.49,4.49,0,0,1,17.5,10.5Zm0-7A2.5,2.5,0,1,0,20,6,2.5,2.5,0,0,0,17.5,3.5Z">
+                </path>
+              </svg>
+            </div>
+            <h1 class="text-lg font-bold text-[#111418] dark:text-white">AgroSostenible</h1>
+          </div>
+          <nav class="flex flex-col gap-2">
+            <a class="flex items-center gap-3 rounded-lg bg-primary/20 px-3 py-2 text-primary" href="dashboard.html">
+              <span class="material-symbols-outlined text-2xl">home</span>
+              <p class="text-sm font-medium leading-normal">Inicio</p>
+            </a>
+            <a class="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+              href="movimientos.html">
+              <span class="material-symbols-outlined text-2xl">potted_plant</span>
+              <p class="text-sm font-medium leading-normal">Movimientos de Cultivo</p>
+            </a>
+            <a class="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+              href="facturas.html">
+              <span class="material-symbols-outlined text-2xl">receipt_long</span>
+              <p class="text-sm font-medium leading-normal">Facturas de Insumos</p>
+            </a>
+            <a class="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+              href="reportes.html">
+              <span class="material-symbols-outlined text-2xl">bar_chart</span>
+              <p class="text-sm font-medium leading-normal">Reportes de Cosecha</p>
+            </a>
+            <a class="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+              href="configuraciones.html">
+              <span class="material-symbols-outlined text-2xl">settings</span>
+              <p class="text-sm font-medium leading-normal">Configuración</p>
+            </a>
+          </nav>
+        </div>
+        <div class="flex flex-col gap-1">
+          <a class="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+            href="configuraciones.html">
+            <span class="material-symbols-outlined text-2xl">settings</span>
+            <p class="text-sm font-medium leading-normal">Configuración</p>
+          </a>
+          <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            href="index.html">
+            <span class="material-symbols-outlined text-gray-800 dark:text-gray-200">help_outline</span>
+            <p class="text-sm font-medium leading-normal">Ayuda</p>
+          </a>
+        </div>
+      </aside>
+      <main class="flex-1 p-6 lg:p-10 overflow-auto">
+        <div class="max-w-7xl mx-auto">
+          <div id="app-header"></div>
+          <div class="mb-6 bg-white dark:bg-gray-900/50 p-4 rounded-xl border border-gray-200 dark:border-gray-800">
+          <div class="mb-6 bg-white dark:bg-gray-900/50 p-4 rounded-xl border border-gray-200 dark:border-gray-800">
+            <div class="flex flex-wrap items-end gap-4">
+              <div class="flex flex-col">
+                <p class="text-gray-900 dark:text-white text-sm font-medium leading-normal pb-2">Filtrar por estado</p>
+                <div class="flex gap-2 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                  <button
+                    class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-md px-3 bg-white dark:bg-gray-700 shadow-sm">
+                    <p class="text-gray-900 dark:text-white text-sm font-medium leading-normal">Todos</p>
+                  </button>
+                  <button
+                    class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-md px-3 hover:bg-white dark:hover:bg-gray-700 transition-colors">
+                    <p class="text-gray-500 dark:text-gray-400 text-sm font-medium leading-normal">Pagada</p>
+                  </button>
+                  <button
+                    class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-md px-3 hover:bg-white dark:hover:bg-gray-700 transition-colors">
+                    <p class="text-gray-500 dark:text-gray-400 text-sm font-medium leading-normal">Pendiente</p>
+                  </button>
+                  <button
+                    class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-md px-3 hover:bg-white dark:hover:bg-gray-700 transition-colors">
+                    <p class="text-gray-500 dark:text-gray-400 text-sm font-medium leading-normal">Vencida</p>
+                  </button>
+                </div>
+              </div>
+              <div class="flex flex-wrap items-end gap-4 flex-1 min-w-80">
+                <label class="flex flex-col min-w-40 flex-1">
+                  <p class="text-gray-900 dark:text-white text-sm font-medium leading-normal pb-2">Desde</p>
+                  <input
+                    class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-gray-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 focus:border-primary dark:focus:border-primary h-10 placeholder:text-gray-500 dark:placeholder:text-gray-400 px-3 text-sm font-normal leading-normal"
+                    type="date" value="2023-09-01" />
+                </label>
+                <label class="flex flex-col min-w-40 flex-1">
+                  <p class="text-gray-900 dark:text-white text-sm font-medium leading-normal pb-2">Hasta</p>
+                  <input
+                    class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-gray-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 focus:border-primary dark:focus:border-primary h-10 placeholder:text-gray-500 dark:placeholder:text-gray-400 px-3 text-sm font-normal leading-normal"
+                    type="date" value="2023-10-31" />
+                </label>
+                <button
+                  class="flex min-w-[84px] items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 text-sm font-bold leading-normal tracking-[0.015em] hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                  <span class="truncate">Aplicar</span>
+                </button>
+                <button id="btn-new-invoice" class="flex min-w-[120px] items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary/90 transition-colors">
+                  <span class="material-symbols-outlined text-base">add</span>
+                  <span class="truncate">Nueva Factura</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2">
+              <div class="overflow-x-auto @container">
+                <div
+                  class="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/50">
+                  <table class="w-full">
+                    <thead class="bg-gray-50 dark:bg-gray-900">
+                      <tr>
+                        <th
+                          class="px-4 py-3 text-left text-gray-600 dark:text-gray-300 text-xs font-semibold uppercase tracking-wider">
+                          Número de Factura</th>
+                        <th
+                          class="px-4 py-3 text-left text-gray-600 dark:text-gray-300 text-xs font-semibold uppercase tracking-wider">
+                          Proveedor/Comprador</th>
+                        <th
+                          class="px-4 py-3 text-left text-gray-600 dark:text-gray-300 text-xs font-semibold uppercase tracking-wider">
+                          Fecha</th>
+                        <th
+                          class="px-4 py-3 text-left text-gray-600 dark:text-gray-300 text-xs font-semibold uppercase tracking-wider">
+                          Monto</th>
+                        <th
+                          class="px-4 py-3 text-left text-gray-600 dark:text-gray-300 text-xs font-semibold uppercase tracking-wider">
+                          Estado</th>
+                        <th
+                          class="px-4 py-3 text-left text-gray-600 dark:text-gray-300 text-xs font-semibold uppercase tracking-wider">
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
+                      <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                        <td class="px-4 py-3 text-gray-800 dark:text-gray-100 text-sm font-medium">FAC-001</td>
+                        <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-sm">Comprador A</td>
+                        <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-sm">25 Oct 2023</td>
+                        <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-sm">$ 2,500,000</td>
+                        <td class="px-4 py-3 text-sm">
+                          <span
+                            class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">
+                            <span class="size-2 rounded-full bg-green-500"></span> Pagada </span>
+                        </td>
+                        <td class="px-4 py-3 text-right"><button
+                            class="text-gray-400 hover:text-gray-800 dark:hover:text-white transition-colors"><span
+                              class="material-symbols-outlined">more_vert</span></button></td>
+                      </tr>
+                      <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                        <td class="px-4 py-3 text-gray-800 dark:text-gray-100 text-sm font-medium">FAC-002</td>
+                        <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-sm">Proveedor AgroInsumos</td>
+                        <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-sm">15 Oct 2023</td>
+                        <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-sm">$ 850,000</td>
+                        <td class="px-4 py-3 text-sm">
+                          <span
+                            class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300">
+                            <span class="size-2 rounded-full bg-orange-500"></span> Pendiente </span>
+                        </td>
+                        <td class="px-4 py-3 text-right"><button
+                            class="text-gray-400 hover:text-gray-800 dark:hover:text-white transition-colors"><span
+                              class="material-symbols-outlined">more_vert</span></button></td>
+                      </tr>
+                      <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                        <td class="px-4 py-3 text-gray-800 dark:text-gray-100 text-sm font-medium">FAC-003</td>
+                        <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-sm">Comprador B</td>
+                        <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-sm">01 Oct 2023</td>
+                        <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-sm">$ 4,200,000</td>
+                        <td class="px-4 py-3 text-sm">
+                          <span
+                            class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300">
+                            <span class="size-2 rounded-full bg-red-500"></span> Vencida </span>
+                        </td>
+                        <td class="px-4 py-3 text-right"><button
+                            class="text-gray-400 hover:text-gray-800 dark:hover:text-white transition-colors"><span
+                              class="material-symbols-outlined">more_vert</span></button></td>
+                      </tr>
+                      <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                        <td class="px-4 py-3 text-gray-800 dark:text-gray-100 text-sm font-medium">FAC-004</td>
+                        <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-sm">Proveedor Semillas Tota</td>
+                        <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-sm">28 Sep 2023</td>
+                        <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-sm">$ 1,500,000</td>
+                        <td class="px-4 py-3 text-sm">
+                          <span
+                            class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">
+                            <span class="size-2 rounded-full bg-green-500"></span> Pagada </span>
+                        </td>
+                        <td class="px-4 py-3 text-right"><button
+                            class="text-gray-400 hover:text-gray-800 dark:hover:text-white transition-colors"><span
+                              class="material-symbols-outlined">more_vert</span></button></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <div
+                    class="flex items-center justify-between border-t border-gray-200 dark:border-gray-800 px-4 py-3">
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Mostrando <span class="font-medium">1</span> a
+                      <span class="font-medium">4</span> de <span class="font-medium">16</span> resultados</p>
+                    <div class="flex gap-2">
+                      <button
+                        class="inline-flex items-center justify-center size-8 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                        <span class="material-symbols-outlined text-base">chevron_left</span>
+                      </button>
+                      <button
+                        class="inline-flex items-center justify-center size-8 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                        <span class="material-symbols-outlined text-base">chevron_right</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="lg:col-span-1">
+              <div
+                class="bg-white dark:bg-gray-900/50 p-6 rounded-xl border border-gray-200 dark:border-gray-800 sticky top-10">
+                <h2 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Detalle de Factura</h2>
+                <div class="flex justify-between items-start mb-6">
+                  <div>
+                    <p id="invoice-type" class="text-gray-900 dark:text-white font-bold text-2xl">FACTURA</p>
+                    <p id="invoice-number" class="text-gray-500 dark:text-gray-400">FAC-001</p>
+                  </div>
+                  <span id="invoice-status" class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">
+                    <span class="size-2 rounded-full bg-green-500"></span> Pagada </span>
+                </div>
+                <div class="grid grid-cols-2 gap-4 text-sm mb-6">
+                  <div class="space-y-1">
+                    <p class="text-gray-500 dark:text-gray-400">De:</p>
+                      <p id="invoice-from-name" class="font-medium text-gray-800 dark:text-gray-200">Finca El Sol</p>
+                      <p id="invoice-from-address" class="text-gray-500 dark:text-gray-400">Vereda La Puerta, Tota</p>
+                  </div>
+                  <div class="space-y-1">
+                    <p class="text-gray-500 dark:text-gray-400">Para:</p>
+                      <p id="invoice-to-name" class="font-medium text-gray-800 dark:text-gray-200">Comprador A</p>
+                      <p id="invoice-to-address" class="text-gray-500 dark:text-gray-400">Corabastos, Bogotá</p>
+                  </div>
+                  <div class="space-y-1">
+                    <p class="text-gray-500 dark:text-gray-400">Fecha de emisión:</p>
+                      <p id="invoice-issue-date" class="font-medium text-gray-800 dark:text-gray-200">25 Oct 2023</p>
+                  </div>
+                  <div class="space-y-1">
+                    <p class="text-gray-500 dark:text-gray-400">Fecha de vencimiento:</p>
+                      <p id="invoice-due-date" class="font-medium text-gray-800 dark:text-gray-200">24 Nov 2023</p>
+                  </div>
+                </div>
+                <div class="border-t border-gray-200 dark:border-gray-800 pt-4">
+                  <table class="w-full text-sm">
+                    <thead>
+                      <tr class="text-left text-gray-600 dark:text-gray-300">
+                        <th class="pb-2 font-semibold">Descripción</th>
+                        <th class="pb-2 font-semibold text-right">Cantidad</th>
+                        <th class="pb-2 font-semibold text-right">Precio</th>
+                        <th class="pb-2 font-semibold text-right">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
+                      <tr>
+                        <td class="py-2">Papa Pastusa</td>
+                        <td class="py-2 text-right">50 bultos</td>
+                        <td class="py-2 text-right">$50,000</td>
+                        <td class="py-2 text-right">$2,500,000</td>
+                      </tr>
+                    </tbody>
+                    <tfoot>
+                      <tr class="font-bold text-gray-800 dark:text-gray-200">
+                        <td class="pt-4" colspan="3">Total a Pagar</td>
+                        <td id="invoice-total" class="pt-4 text-right">$2,500,000</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+                <div class="mt-8 flex gap-2">
+                  <button
+                    class="flex-1 flex min-w-[84px] items-center justify-center gap-2 overflow-hidden rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary/90 transition-colors">
+                    <span class="material-symbols-outlined text-base">download</span>
+                    <span class="truncate">Descargar</span>
+                  </button>
+                  <button
+                    class="flex-1 flex min-w-[84px] items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 text-sm font-bold leading-normal tracking-[0.015em] hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                    <span class="material-symbols-outlined text-base">print</span>
+                    <span class="truncate">Imprimir</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+<!-- Modal: Nueva Factura -->
+<div id="modal-invoice" aria-hidden="true" class="fixed inset-0 z-50 flex items-center justify-center pointer-events-none opacity-0 transition-opacity">
+  <div class="absolute inset-0 bg-black/40" aria-hidden="true"></div>
+  <div class="relative w-full max-w-2xl p-4">
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 shadow-lg transform scale-95 transition-transform">
+      <h3 class="text-lg font-bold mb-4">Nueva Factura</h3>
+      <form id="form-invoice" class="space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="text-sm font-medium">Número</label>
+            <input id="inv-number" class="form-input w-full rounded-lg border px-3 py-2" required />
+          </div>
+          <div>
+            <label class="text-sm font-medium">Monto</label>
+            <input id="inv-amount" type="number" class="form-input w-full rounded-lg border px-3 py-2" required />
+          </div>
+        </div>
+        <div>
+          <label class="text-sm font-medium">Proveedor/Comprador</label>
+          <input id="inv-party" class="form-input w-full rounded-lg border px-3 py-2" />
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="text-sm font-medium">Fecha emisión</label>
+            <input id="inv-date" type="date" class="form-input w-full rounded-lg border px-3 py-2" value="" />
+          </div>
+          <div>
+            <label class="text-sm font-medium">Fecha vencimiento</label>
+            <input id="inv-due" type="date" class="form-input w-full rounded-lg border px-3 py-2" value="" />
+          </div>
+        </div>
+        <div>
+          <label class="text-sm font-medium">Estado</label>
+          <select id="inv-status" class="form-input w-full rounded-lg border px-3 py-2">
+            <option>Pendiente</option>
+            <option>Pagada</option>
+          </select>
+        </div>
+        <div class="flex justify-end gap-3 pt-2">
+          <button id="inv-cancel" class="px-4 py-2 rounded-lg bg-gray-100" data-modal-close>Cancelar</button>
+          <button id="inv-save" class="px-4 py-2 rounded-lg bg-primary text-white">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+</body>
+
+  <script src="js/app.js"></script>
+
+</html>

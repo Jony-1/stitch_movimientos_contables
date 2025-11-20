@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Dashboard - AgroSostenible</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+    <link rel="stylesheet" href="assets/styles.css" />
+</head>
+
+<body class="font-display bg-background-light dark:bg-background-dark">
+    <div class="relative flex min-h-screen w-full">
+        <aside
+            class="flex h-screen min-h-full w-64 flex-col justify-between border-r border-slate-200 bg-white p-4 font-display dark:border-slate-800 dark:bg-background-dark sticky top-0">
+            <div class="flex flex-col gap-8">
+                <div class="flex items-center gap-3 px-2">
+                    <div class="size-8 text-primary">
+                        <svg class="icon-grass" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M20,22H4a1,1,0,0,1,0-2H20a1,1,0,0,1,0,2Zm-1-3.68a1,1,0,0,0-1,.12L16.27,20H7.73l-1.74-1.56a1,1,0,0,0-1.28,1.54L6.15,21a1,1,0,0,0,.85.5h8a1,1,0,0,0,.85-.5l1.44-1.28A1,1,0,0,0,19,18.32ZM12,14.5A5.5,5.5,0,1,1,17.5,9,5.51,5.51,0,0,1,12,14.5Zm0-9A3.5,3.5,0,1,0,15.5,9,3.5,3.5,0,0,0,12,5.5ZM6.5,10.5a4.5,4.5,0,1,1,4-4.47V2.5a1,1,0,0,0-2,0V6A4.49,4.49,0,0,1,6.5,10.5Zm0-7A2.5,2.5,0,1,0,9,6,2.5,2.5,0,0,0,6.5,3.5Zm11,7a4.5,4.5,0,1,1,4-4.47V2.5a1,1,0,1,0-2,0V6A4.49,4.49,0,0,1,17.5,10.5Zm0-7A2.5,2.5,0,1,0,20,6,2.5,2.5,0,0,0,17.5,3.5Z">
+                            </path>
+                        </svg>
+                    </div>
+                    <h1 class="text-lg font-bold text-[#111418] dark:text-white">AgroSostenible</h1>
+                </div>
+                <nav class="flex flex-col gap-2">
+                    <a class="flex items-center gap-3 rounded-lg bg-primary/20 px-3 py-2 text-primary" href="dashboard.html">
+                        <span class="material-symbols-outlined text-2xl">home</span>
+                        <p class="text-sm font-medium leading-normal">Inicio</p>
+                    </a>
+                    <a class="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+                        href="movimientos.html">
+                        <span class="material-symbols-outlined text-2xl">potted_plant</span>
+                        <p class="text-sm font-medium leading-normal">Movimientos de Cultivo</p>
+                    </a>
+                    <a class="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+                        href="facturas.html">
+                        <span class="material-symbols-outlined text-2xl">receipt_long</span>
+                        <p class="text-sm font-medium leading-normal">Facturas de Insumos</p>
+                    </a>
+                    <a class="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+                        href="reportes.html">
+                        <span class="material-symbols-outlined text-2xl">bar_chart</span>
+                        <p class="text-sm font-medium leading-normal">Reportes de Cosecha</p>
+                    </a>
+                    <a class="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+                        href="configuraciones.html">
+                        <span class="material-symbols-outlined text-2xl">settings</span>
+                        <p class="text-sm font-medium leading-normal">Configuración</p>
+                    </a>
+                </nav>
+            </div>
+            <div class="flex flex-col gap-1">
+                <a class="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+                    href="index.html">
+                    <span class="material-symbols-outlined text-2xl">logout</span>
+                    <p class="text-sm font-medium leading-normal">Cerrar Sesión</p>
+                </a>
+            </div>
+        </aside>
+        <main class="flex flex-1 flex-col">
+            <div id="app-header"></div>
+            <div class="flex flex-1 flex-col gap-6 p-8">
+                <div class="flex flex-wrap items-end justify-between gap-4">
+                    <div class="flex flex-col gap-1">
+                        <h1 class="text-3xl font-bold text-slate-900 dark:text-white">Hola, Juan</h1>
+                        <p class="text-slate-500 dark:text-slate-400">Aquí tienes un resumen de la actividad de tu
+                            cultivo.</p>
+                    </div>
+                    <button
+                        class="flex cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg h-10 min-w-[120px] bg-primary px-4 text-sm font-bold text-white">
+                        <span class="material-symbols-outlined">add_circle</span>
+                        <span>Nuevo Movimiento</span>
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    <div
+                        class="flex flex-1 flex-col gap-2 rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+                        <p class="text-base font-medium text-slate-600 dark:text-slate-300">Ingresos de la Cosecha</p>
+                        <p class="text-3xl font-bold tracking-tight text-green-600 dark:text-green-500">$5,200,000</p>
+                        <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Ciclo Actual</p>
+                    </div>
+                    <div
+                        class="flex flex-1 flex-col gap-2 rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+                        <p class="text-base font-medium text-slate-600 dark:text-slate-300">Gastos del Cultivo</p>
+                        <p class="text-3xl font-bold tracking-tight text-red-600 dark:text-red-500">$2,850,000</p>
+                        <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Ciclo Actual</p>
+                    </div>
+                    <div
+                        class="flex flex-1 flex-col gap-2 rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+                        <p class="text-base font-medium text-slate-600 dark:text-slate-300">Resultado Neto (Ganancia)
+                        </p>
+                        <p class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">$2,350,000</p>
+                        <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Ciclo Actual</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 gap-6 lg:grid-cols-5">
+                    <div
+                        class="lg:col-span-3 flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+                        <div class="flex flex-col">
+                            <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-200">Ingresos vs. Gastos por
+                                Ciclo</h3>
+                            <p class="text-sm text-slate-500 dark:text-slate-400">Comparativa de los últimos ciclos de
+                                cultivo</p>
+                        </div>
+                        <div class="grid h-full min-h-[220px] grid-flow-col items-end gap-4 px-2">
+                            <div class="flex h-full w-full flex-col-reverse items-center gap-2">
+                                <div class="flex h-full w-full items-end gap-1">
+                                    <div class="w-full rounded-t bg-green-500" style="height: 60%;"></div>
+                                    <div class="w-full rounded-t bg-red-500" style="height: 40%;"></div>
+                                </div>
+                                <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Ciclo 1</p>
+                            </div>
+                            <div class="flex h-full w-full flex-col-reverse items-center gap-2">
+                                <div class="flex h-full w-full items-end gap-1">
+                                    <div class="w-full rounded-t bg-green-500" style="height: 75%;"></div>
+                                    <div class="w-full rounded-t bg-red-500" style="height: 55%;"></div>
+                                </div>
+                                <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Ciclo 2</p>
+                            </div>
+                            <div class="flex h-full w-full flex-col-reverse items-center gap-2">
+                                <div class="flex h-full w-full items-end gap-1">
+                                    <div class="w-full rounded-t bg-green-500" style="height: 85%;"></div>
+                                    <div class="w-full rounded-t bg-red-500" style="height: 60%;"></div>
+                                </div>
+                                <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Ciclo 3</p>
+                            </div>
+                            <div class="flex h-full w-full flex-col-reverse items-center gap-2">
+                                <div class="flex h-full w-full items-end gap-1">
+                                    <div class="w-full rounded-t bg-green-500" style="height: 100%;"></div>
+                                    <div class="w-full rounded-t bg-red-500" style="height: 50%;"></div>
+                                </div>
+                                <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Actual</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div
+                        class="lg:col-span-2 flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+                        <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-200">Últimos Movimientos</h3>
+                        <div class="flex flex-col">
+                            <table class="w-full table-auto text-left text-sm">
+                                <thead>
+                                    <tr
+                                        class="border-b border-slate-200 text-xs uppercase text-slate-500 dark:border-slate-700 dark:text-slate-400">
+                                        <th class="py-2 font-medium">Descripción</th>
+                                        <th class="py-2 font-medium text-center">Tipo</th>
+                                        <th class="py-2 font-medium text-right">Valor</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="border-b border-slate-200 dark:border-slate-800">
+                                        <td class="py-3 pr-2">
+                                            <p class="font-medium text-slate-800 dark:text-slate-200">Venta Cosecha</p>
+                                            <p class="text-xs text-slate-500 dark:text-slate-400">20 Jul 2024</p>
+                                        </td>
+                                        <td class="py-3 text-center"><span
+                                                class="rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800 dark:bg-green-900/50 dark:text-green-300">Ingreso</span>
+                                        </td>
+                                        <td class="py-3 text-right font-medium text-green-600 dark:text-green-500">
+                                            +$5,200,000</td>
+                                    </tr>
+                                    <tr class="border-b border-slate-200 dark:border-slate-800">
+                                        <td class="py-3 pr-2">
+                                            <p class="font-medium text-slate-800 dark:text-slate-200">Compra
+                                                Fertilizante</p>
+                                            <p class="text-xs text-slate-500 dark:text-slate-400">15 Jul 2024</p>
+                                        </td>
+                                        <td class="py-3 text-center"><span
+                                                class="rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-800 dark:bg-red-900/50 dark:text-red-300">Gasto</span>
+                                        </td>
+                                        <td class="py-3 text-right font-medium text-red-600 dark:text-red-500">-$950,000
+                                        </td>
+                                    </tr>
+                                    <tr class="border-b border-slate-200 dark:border-slate-800">
+                                        <td class="py-3 pr-2">
+                                            <p class="font-medium text-slate-800 dark:text-slate-200">Pago Jornaleros
+                                            </p>
+                                            <p class="text-xs text-slate-500 dark:text-slate-400">12 Jul 2024</p>
+                                        </td>
+                                        <td class="py-3 text-center"><span
+                                                class="rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-800 dark:bg-red-900/50 dark:text-red-300">Gasto</span>
+                                        </td>
+                                        <td class="py-3 text-right font-medium text-red-600 dark:text-red-500">
+                                            -$1,200,000</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-3 pr-2">
+                                            <p class="font-medium text-slate-800 dark:text-slate-200">Alquiler Tractor
+                                            </p>
+                                            <p class="text-xs text-slate-500 dark:text-slate-400">05 Jul 2024</p>
+                                        </td>
+                                        <td class="py-3 text-center"><span
+                                                class="rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-800 dark:bg-red-900/50 dark:text-red-300">Gasto</span>
+                                        </td>
+                                        <td class="py-3 text-right font-medium text-red-600 dark:text-red-500">-$700,000
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+</body>
+
+    <script src="js/app.js"></script>
+
+</html>

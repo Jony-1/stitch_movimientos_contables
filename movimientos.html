@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Movimientos de Cultivo</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+    <link rel="stylesheet" href="assets/styles.css" />
+</head>
+
+<body class="bg-background-light dark:bg-background-dark font-display">
+    <div class="flex h-screen">
+        <aside
+            class="flex h-screen min-h-full w-64 flex-col justify-between border-r border-slate-200 bg-white p-4 font-display dark:border-slate-800 dark:bg-background-dark sticky top-0">
+            <div class="flex flex-col gap-8">
+                <div class="flex items-center gap-3 px-2">
+                    <div class="size-8 text-primary">
+                        <svg class="icon-grass" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M20,22H4a1,1,0,0,1,0-2H20a1,1,0,0,1,0,2Zm-1-3.68a1,1,0,0,0-1,.12L16.27,20H7.73l-1.74-1.56a1,1,0,0,0-1.28,1.54L6.15,21a1,1,0,0,0,.85.5h8a1,1,0,0,0,.85-.5l1.44-1.28A1,1,0,0,0,19,18.32ZM12,14.5A5.5,5.5,0,1,1,17.5,9,5.51,5.51,0,0,1,12,14.5Zm0-9A3.5,3.5,0,1,0,15.5,9,3.5,3.5,0,0,0,12,5.5ZM6.5,10.5a4.5,4.5,0,1,1,4-4.47V2.5a1,1,0,0,0-2,0V6A4.49,4.49,0,0,1,6.5,10.5Zm0-7A2.5,2.5,0,1,0,9,6,2.5,2.5,0,0,0,6.5,3.5Zm11,7a4.5,4.5,0,1,1,4-4.47V2.5a1,1,0,1,0-2,0V6A4.49,4.49,0,0,1,17.5,10.5Zm0-7A2.5,2.5,0,1,0,20,6,2.5,2.5,0,0,0,17.5,3.5Z">
+                            </path>
+                        </svg>
+                    </div>
+                    <h1 class="text-lg font-bold text-[#111418] dark:text-white">AgroSostenible</h1>
+                </div>
+                <nav class="flex flex-col gap-2">
+                    <a class="flex items-center gap-3 rounded-lg bg-primary/20 px-3 py-2 text-primary" href="dashboard.html">
+                        <span class="material-symbols-outlined text-2xl">home</span>
+                        <p class="text-sm font-medium leading-normal">Inicio</p>
+                    </a>
+                    <a class="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+                        href="movimientos.html">
+                        <span class="material-symbols-outlined text-2xl">potted_plant</span>
+                        <p class="text-sm font-medium leading-normal">Movimientos de Cultivo</p>
+                    </a>
+                    <a class="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+                        href="facturas.html">
+                        <span class="material-symbols-outlined text-2xl">receipt_long</span>
+                        <p class="text-sm font-medium leading-normal">Facturas de Insumos</p>
+                    </a>
+                    <a class="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+                        href="reportes.html">
+                        <span class="material-symbols-outlined text-2xl">bar_chart</span>
+                        <p class="text-sm font-medium leading-normal">Reportes de Cosecha</p>
+                    </a>
+                    <a class="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+                        href="configuraciones.html">
+                        <span class="material-symbols-outlined text-2xl">settings</span>
+                        <p class="text-sm font-medium leading-normal">Configuración</p>
+                    </a>
+                </nav>
+            </div>
+            <div class="flex flex-col gap-1">
+                <a class="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+                    href="index.html">
+                    <span class="material-symbols-outlined text-2xl">logout</span>
+                    <p class="text-sm font-medium leading-normal">Cerrar Sesión</p>
+                </a>
+            </div>
+        </aside>
+        <main class="flex-1 p-8 overflow-y-auto">
+            <div id="app-header"></div>
+            <div class="max-w-7xl mx-auto">
+                <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
+                    <h1 class="text-gray-900 dark:text-white text-4xl font-black leading-tight tracking-[-0.033em]">
+                        Movimientos de Cultivo</h1>
+                    <button
+                        class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary/90">
+                        <span class="material-symbols-outlined" style="font-size: 20px;">add</span>
+                        <span class="truncate">+ Nuevo movimiento</span>
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto @container">
+                    <div class="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/50">
+                        <table class="w-full">
+                            <thead class="bg-gray-50 dark:bg-gray-900">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-gray-600 dark:text-gray-300 text-xs font-semibold uppercase tracking-wider">Fecha</th>
+                                    <th class="px-4 py-3 text-left text-gray-600 dark:text-gray-300 text-xs font-semibold uppercase tracking-wider">Tipo</th>
+                                    <th class="px-4 py-3 text-left text-gray-600 dark:text-gray-300 text-xs font-semibold uppercase tracking-wider">Categoría</th>
+                                    <th class="px-4 py-3 text-left text-gray-600 dark:text-gray-300 text-xs font-semibold uppercase tracking-wider">Descripción</th>
+                                    <th class="px-4 py-3 text-right text-gray-600 dark:text-gray-300 text-xs font-semibold uppercase tracking-wider">Monto</th>
+                                    <th class="px-4 py-3 text-left text-gray-600 dark:text-gray-300 text-xs font-semibold uppercase tracking-wider">Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
+                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+                                        2023-11-10</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                        <span
+                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">Gasto</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+                                        Semillas</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200">
+                                        Compra de semilla certificada</td>
+                                    <td
+                                        class="px-6 py-4 whitespace-nowrap text-sm text-red-600 dark:text-red-400 font-medium text-right">
+                                        -$800,000</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                        <span
+                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">Registrado</span>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+                                        2023-11-05</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                        <span
+                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">Gasto</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+                                        Mano de obra</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200">
+                                        Pago jornaleros recolección</td>
+                                    <td
+                                        class="px-6 py-4 whitespace-nowrap text-sm text-red-600 dark:text-red-400 font-medium text-right">
+                                        -$600,000</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                        <span
+                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">Borrador</span>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+                                        2023-10-28</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                        <span
+                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">Gasto</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+                                        Abonos</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200">
+                                        Compra de fertilizante triple 15</td>
+                                    <td
+                                        class="px-6 py-4 whitespace-nowrap text-sm text-red-600 dark:text-red-400 font-medium text-right">
+                                        -$450,000</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                        <span
+                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">Registrado</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <div class="fixed inset-0 bg-gray-900 bg-opacity-50 dark:bg-opacity-80 flex items-center justify-center z-50 transition-opacity opacity-0 pointer-events-none"
+        id="new-movement-modal">
+        <div
+            class="bg-white dark:bg-gray-900 rounded-xl shadow-xl w-full max-w-lg m-4 transform scale-95 transition-transform">
+            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                <h2 class="text-lg font-bold text-gray-900 dark:text-white">Registrar Nuevo Movimiento</h2>
+                <button class="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="p-6">
+                <form class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                            for="date">Fecha</label>
+                        <input
+                            class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary focus:ring-primary sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200"
+                            id="date" name="date" type="date" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Tipo</label>
+                        <div class="mt-2 flex gap-4">
+                            <label class="flex items-center">
+                                <input checked=""
+                                    class="form-radio h-4 w-4 text-primary focus:ring-primary border-gray-300 dark:border-gray-600 dark:bg-gray-800"
+                                    name="type" type="radio" value="ingreso" />
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Ingreso</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input
+                                    class="form-radio h-4 w-4 text-primary focus:ring-primary border-gray-300 dark:border-gray-600 dark:bg-gray-800"
+                                    name="type" type="radio" value="gasto" />
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Gasto</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                            for="category">Categoría</label>
+                        <select
+                            class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary focus:ring-primary sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200"
+                            id="category" name="category">
+                            <option>Venta de papa</option>
+                            <option>Semillas</option>
+                            <option>Abonos</option>
+                            <option>Mano de obra</option>
+                            <option>Combustible</option>
+                            <option>Arriendo de maquinaria</option>
+                            <option>Transporte</option>
+                            <option>Otros</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                            for="description">Descripción</label>
+                        <textarea
+                            class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary focus:ring-primary sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200"
+                            id="description" name="description" placeholder="Ej: Venta de 20 bultos de papa R12"
+                            rows="3"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                            for="amount">Monto</label>
+                        <div class="relative mt-1 rounded-lg shadow-sm">
+                            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                <span class="text-gray-500 dark:text-gray-400 sm:text-sm">$</span>
+                            </div>
+                            <input
+                                class="block w-full rounded-lg border-gray-300 dark:border-gray-600 pl-7 pr-12 focus:border-primary focus:ring-primary sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200"
+                                id="amount" name="amount" placeholder="0.00" type="number" />
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                                <span class="text-gray-500 dark:text-gray-400 sm:text-sm" id="currency">COP</span>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="px-6 py-4 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3 rounded-b-xl">
+                <button
+                    class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 border border-gray-300 dark:border-gray-600 text-sm font-bold leading-normal tracking-[0.015em] hover:bg-gray-100 dark:hover:bg-gray-600"
+                    type="button">
+                    <span class="truncate">Cancelar</span>
+                </button>
+                <button
+                    class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary/90"
+                    type="button">
+                    <span class="truncate">Guardar</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+
+    <script src="js/app.js"></script>
+
+</html>

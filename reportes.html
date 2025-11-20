@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Reportes de Cosecha y Financieros</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com" rel="preconnect" />
+  <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap"
+    rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#137fec",
+            "background-light": "#f6f7f8",
+            "background-dark": "#101922",
+          },
+          fontFamily: {
+            "display": ["Manrope", "sans-serif"]
+          },
+          borderRadius: {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+        },
+      },
+    }
+  </script>
+  <link rel="stylesheet" href="assets/styles.css" />
+</head>
+
+<body class="bg-background-light dark:bg-background-dark font-display text-gray-800 dark:text-gray-200">
+  <div class="relative flex min-h-screen w-full">
+    <aside
+      class="flex h-screen min-h-full w-64 flex-col justify-between border-r border-slate-200 bg-white p-4 font-display dark:border-slate-800 dark:bg-background-dark sticky top-0">
+      <div class="flex flex-col gap-8">
+        <div class="flex items-center gap-3 px-2">
+          <div class="size-8 text-primary">
+            <svg class="icon-grass" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M20,22H4a1,1,0,0,1,0-2H20a1,1,0,0,1,0,2Zm-1-3.68a1,1,0,0,0-1,.12L16.27,20H7.73l-1.74-1.56a1,1,0,0,0-1.28,1.54L6.15,21a1,1,0,0,0,.85.5h8a1,1,0,0,0,.85-.5l1.44-1.28A1,1,0,0,0,19,18.32ZM12,14.5A5.5,5.5,0,1,1,17.5,9,5.51,5.51,0,0,1,12,14.5Zm0-9A3.5,3.5,0,1,0,15.5,9,3.5,3.5,0,0,0,12,5.5ZM6.5,10.5a4.5,4.5,0,1,1,4-4.47V2.5a1,1,0,0,0-2,0V6A4.49,4.49,0,0,1,6.5,10.5Zm0-7A2.5,2.5,0,1,0,9,6,2.5,2.5,0,0,0,6.5,3.5Zm11,7a4.5,4.5,0,1,1,4-4.47V2.5a1,1,0,1,0-2,0V6A4.49,4.49,0,0,1,17.5,10.5Zm0-7A2.5,2.5,0,1,0,20,6,2.5,2.5,0,0,0,17.5,3.5Z">
+              </path>
+            </svg>
+          </div>
+          <h1 class="text-lg font-bold text-[#111418] dark:text-white">AgroSostenible</h1>
+        </div>
+        <nav class="flex flex-col gap-2">
+          <a class="flex items-center gap-3 rounded-lg bg-primary/20 px-3 py-2 text-primary" href="dashboard.html">
+            <span class="material-symbols-outlined text-2xl">home</span>
+            <p class="text-sm font-medium leading-normal">Inicio</p>
+          </a>
+          <a class="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+            href="movimientos.html">
+            <span class="material-symbols-outlined text-2xl">potted_plant</span>
+            <p class="text-sm font-medium leading-normal">Movimientos de Cultivo</p>
+          </a>
+          <a class="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+            href="facturas.html">
+            <span class="material-symbols-outlined text-2xl">receipt_long</span>
+            <p class="text-sm font-medium leading-normal">Facturas de Insumos</p>
+          </a>
+          <a class="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+            href="reportes.html">
+            <span class="material-symbols-outlined text-2xl">bar_chart</span>
+            <p class="text-sm font-medium leading-normal">Reportes de Cosecha</p>
+          </a>
+          <a class="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+            href="configuraciones.html">
+            <span class="material-symbols-outlined text-2xl">settings</span>
+            <p class="text-sm font-medium leading-normal">Configuración</p>
+          </a>
+        </nav>
+      </div>
+      <div class="flex flex-col gap-1">
+        <a class="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+          href="index.html">
+          <span class="material-symbols-outlined text-2xl">logout</span>
+          <p class="text-sm font-medium leading-normal">Cerrar Sesión</p>
+        </a>
+      </div>
+    </aside>
+    <main class="flex-1 p-8 overflow-y-auto">
+      <div class="max-w-7xl mx-auto">
+        <div id="app-header"></div>
+        <div class="px-4 sm:px-8 md:px-12 lg:px-20 xl:px-40 flex flex-1 justify-center py-5">
+          <div class="layout-content-container flex flex-col max-w-5xl flex-1">
+            <div class="flex flex-wrap justify-between items-center gap-4 p-4">
+            <h1 class="text-gray-900 dark:text-white text-4xl font-black leading-tight tracking-[-0.033em] min-w-72">
+              Reportes de Cosecha y Financieros</h1>
+            <button
+              class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary/90 transition-colors">
+              <span class="material-symbols-outlined text-lg">download</span>
+              <span class="truncate">Exportar</span>
+            </button>
+          </div>
+          <div class="flex px-4 py-3">
+            <div
+              class="flex h-10 w-full md:w-auto items-center justify-center rounded-lg bg-gray-200 dark:bg-background-dark p-1">
+              <label
+                class="flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-4 has-[:checked]:bg-white has-[:checked]:dark:bg-gray-700 has-[:checked]:shadow-[0_0_4px_rgba(0,0,0,0.1)] has-[:checked]:text-gray-900 has-[:checked]:dark:text-white text-gray-500 dark:text-gray-400 text-sm font-medium leading-normal transition-colors">
+                <span class="truncate">Resumen de Ingresos/Gastos por Cultivo</span>
+                <input checked="" class="invisible w-0" name="reportType" type="radio"
+                  value="Resumen de Ingresos/Gastos por Cultivo" />
+              </label>
+              <label
+                class="flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-4 has-[:checked]:bg-white has-[:checked]:dark:bg-gray-700 has-[:checked]:shadow-[0_0_4px_rgba(0,0,0,0.1)] has-[:checked]:text-gray-900 has-[:checked]:dark:text-white text-gray-500 dark:text-gray-400 text-sm font-medium leading-normal transition-colors">
+                <span class="truncate">Balance Simple de Activos Productivos</span>
+                <input class="invisible w-0" name="reportType" type="radio"
+                  value="Balance Simple de Activos Productivos" />
+              </label>
+            </div>
+          </div>
+          <div class="flex gap-3 p-3 overflow-x-auto">
+            <button
+              class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-primary/20 pl-4 pr-2 text-primary font-bold">
+              <p class="text-sm leading-normal">Última cosecha</p>
+              <span class="material-symbols-outlined text-base">expand_more</span>
+            </button>
+            <button
+              class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-gray-200 dark:bg-gray-800 pl-4 pr-2 text-gray-800 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors">
+              <p class="text-sm font-medium leading-normal">Ciclo actual</p>
+              <span class="material-symbols-outlined text-base">expand_more</span>
+            </button>
+            <button
+              class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-gray-200 dark:bg-gray-800 pl-4 pr-2 text-gray-800 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors">
+              <p class="text-sm font-medium leading-normal">Este año</p>
+              <span class="material-symbols-outlined text-base">expand_more</span>
+            </button>
+            <button
+              class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-gray-200 dark:bg-gray-800 pl-4 pr-2 text-gray-800 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors">
+              <p class="text-sm font-medium leading-normal">Personalizado</p>
+              <span class="material-symbols-outlined text-base">expand_more</span>
+            </button>
+          </div>
+          <div class="flex flex-wrap gap-4 p-4">
+            <div
+              class="flex min-w-[158px] flex-1 flex-col gap-2 rounded-lg p-6 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+              <div class="flex items-center gap-2">
+                <p class="text-gray-800 dark:text-gray-300 text-base font-medium leading-normal">Ingresos totales de
+                  papa</p>
+                <span class="material-symbols-outlined text-sm text-gray-400 dark:text-gray-500 cursor-help"
+                  title="Total vendido de la cosecha de papa.">help_outline</span>
+              </div>
+              <p class="text-gray-900 dark:text-white tracking-light text-2xl font-bold leading-tight">$35,000,000</p>
+            </div>
+            <div
+              class="flex min-w-[158px] flex-1 flex-col gap-2 rounded-lg p-6 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+              <div class="flex items-center gap-2">
+                <p class="text-gray-800 dark:text-gray-300 text-base font-medium leading-normal">Gastos totales del
+                  ciclo</p>
+                <span class="material-symbols-outlined text-sm text-gray-400 dark:text-gray-500 cursor-help"
+                  title="Suma de todos los costos para producir la cosecha (semillas, abono, mano de obra, etc.).">help_outline</span>
+              </div>
+              <p class="text-gray-900 dark:text-white tracking-light text-2xl font-bold leading-tight">$22,500,000</p>
+            </div>
+            <div
+              class="flex min-w-[158px] flex-1 flex-col gap-2 rounded-lg p-6 border border-green-500 dark:border-green-400 bg-green-50 dark:bg-green-900/20">
+              <div class="flex items-center gap-2">
+                <p class="text-gray-800 dark:text-gray-300 text-base font-medium leading-normal">Resultado neto
+                  (Ganancia)</p>
+                <span class="material-symbols-outlined text-sm text-gray-400 dark:text-gray-500 cursor-help"
+                  title="La ganancia final después de restar los gastos a los ingresos.">help_outline</span>
+              </div>
+              <p class="text-green-600 dark:text-green-400 tracking-light text-2xl font-bold leading-tight">$12,500,000
+              </p>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 p-4">
+            <div
+              class="flex flex-col gap-4 p-6 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+              <h3 class="text-gray-900 dark:text-white text-lg font-bold">Gastos del Cultivo por Categoría</h3>
+              <div class="flex justify-center items-center h-64">
+                <div class="relative w-48 h-48">
+                  <svg class="w-full h-full" viewBox="0 0 36 36">
+                    <path class="stroke-red-200 dark:stroke-red-800"
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none"
+                      stroke-linecap="round" stroke-width="4"></path>
+                    <path class="stroke-orange-500"
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none"
+                      stroke-dasharray="40, 100" stroke-linecap="round" stroke-width="4"></path>
+                    <path class="stroke-yellow-500"
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none"
+                      stroke-dasharray="25, 100" stroke-dashoffset="-40" stroke-linecap="round" stroke-width="4"></path>
+                    <path class="stroke-lime-500"
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none"
+                      stroke-dasharray="20, 100" stroke-dashoffset="-65" stroke-linecap="round" stroke-width="4"></path>
+                    <path class="stroke-cyan-500"
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none"
+                      stroke-dasharray="10, 100" stroke-dashoffset="-85" stroke-linecap="round" stroke-width="4"></path>
+                  </svg>
+                  <div class="absolute inset-0 flex flex-col items-center justify-center">
+                    <span class="text-gray-500 dark:text-gray-400 text-sm">Total Gastos</span>
+                    <span class="text-gray-900 dark:text-white text-2xl font-bold">$22.5M</span>
+                  </div>
+                </div>
+              </div>
+              <div class="flex flex-col gap-2">
+                <div class="flex justify-between items-center text-sm">
+                  <div class="flex items-center gap-2">
+                    <div class="w-3 h-3 rounded-full bg-orange-500"></div>
+                    <span class="text-gray-600 dark:text-gray-400">Semillas y Siembra</span>
+                  </div>
+                  <span class="font-semibold text-gray-800 dark:text-gray-200">$9,000,000</span>
+                </div>
+                <div class="flex justify-between items-center text-sm">
+                  <div class="flex items-center gap-2">
+                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                    <span class="text-gray-600 dark:text-gray-400">Fertilizantes y Abonos</span>
+                  </div>
+                  <span class="font-semibold text-gray-800 dark:text-gray-200">$5,625,000</span>
+                </div>
+                <div class="flex justify-between items-center text-sm">
+                  <div class="flex items-center gap-2">
+                    <div class="w-3 h-3 rounded-full bg-lime-500"></div>
+                    <span class="text-gray-600 dark:text-gray-400">Mano de Obra</span>
+                  </div>
+                  <span class="font-semibold text-gray-800 dark:text-gray-200">$4,500,000</span>
+                </div>
+                <div class="flex justify-between items-center text-sm">
+                  <div class="flex items-center gap-2">
+                    <div class="w-3 h-3 rounded-full bg-cyan-500"></div>
+                    <span class="text-gray-600 dark:text-gray-400">Transporte</span>
+                  </div>
+                  <span class="font-semibold text-gray-800 dark:text-gray-200">$2,250,000</span>
+                </div>
+                <div class="flex justify-between items-center text-sm">
+                  <div class="flex items-center gap-2">
+                    <div class="w-3 h-3 rounded-full bg-red-200 dark:bg-red-800"></div>
+                    <span class="text-gray-600 dark:text-gray-400">Otros</span>
+                  </div>
+                  <span class="font-semibold text-gray-800 dark:text-gray-200">$1,125,000</span>
+                </div>
+              </div>
+            </div>
+            <div
+              class="flex flex-col gap-4 p-6 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+              <h3 class="text-gray-900 dark:text-white text-lg font-bold">Histórico de Resultados por Cosecha</h3>
+              <div class="flex items-end gap-3 h-64">
+                <div class="flex flex-col items-center gap-2 flex-1">
+                  <div
+                    class="w-full h-24 bg-green-200 dark:bg-green-700 rounded-t-md hover:bg-green-300 dark:hover:bg-green-600 transition-colors">
+                  </div>
+                  <p class="text-xs text-gray-500 dark:text-gray-400">Cosecha 1</p>
+                </div>
+                <div class="flex flex-col items-center gap-2 flex-1">
+                  <div
+                    class="w-full h-32 bg-green-200 dark:bg-green-700 rounded-t-md hover:bg-green-300 dark:hover:bg-green-600 transition-colors">
+                  </div>
+                  <p class="text-xs text-gray-500 dark:text-gray-400">Cosecha 2</p>
+                </div>
+                <div class="flex flex-col items-center gap-2 flex-1">
+                  <div
+                    class="w-full h-16 bg-red-200 dark:bg-red-700 rounded-t-md hover:bg-red-300 dark:hover:bg-red-600 transition-colors">
+                  </div>
+                  <p class="text-xs text-gray-500 dark:text-gray-400">Cosecha 3</p>
+                </div>
+                <div class="flex flex-col items-center gap-2 flex-1">
+                  <div
+                    class="w-full h-40 bg-green-200 dark:bg-green-700 rounded-t-md hover:bg-green-300 dark:hover:bg-green-600 transition-colors">
+                  </div>
+                  <p class="text-xs text-gray-500 dark:text-gray-400">Cosecha 4</p>
+                </div>
+                <div class="flex flex-col items-center gap-2 flex-1">
+                  <div
+                    class="w-full h-28 bg-green-200 dark:bg-green-700 rounded-t-md hover:bg-green-300 dark:hover:bg-green-600 transition-colors">
+                  </div>
+                  <p class="text-xs text-gray-500 dark:text-gray-400">Cosecha 5</p>
+                </div>
+                <div class="flex flex-col items-center gap-2 flex-1">
+                  <div class="w-full h-48 bg-green-300 dark:bg-green-600 rounded-t-md border-2 border-primary"></div>
+                  <p class="text-xs font-bold text-primary">Actual</p>
+                </div>
+              </div>
+              <div class="flex justify-center gap-4 mt-4">
+                <div class="flex items-center gap-2 text-sm">
+                  <div class="w-3 h-3 rounded-sm bg-green-200 dark:bg-green-700"></div>
+                  <span class="text-gray-600 dark:text-gray-400">Ganancia</span>
+                </div>
+                <div class="flex items-center gap-2 text-sm">
+                  <div class="w-3 h-3 rounded-sm bg-red-200 dark:bg-red-700"></div>
+                  <span class="text-gray-600 dark:text-gray-400">Pérdida</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+</body>
+
+  <script src="js/app.js"></script>
+
+</html>
