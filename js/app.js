@@ -1030,7 +1030,13 @@
                     payload.type === "gasto"
                       ? -Math.abs(payload.amount)
                       : Math.abs(payload.amount);
-                  addMovement(payload);
+                  fetch("/api/movements", {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(payload)
+                  });
                   hideModal(movementModal);
                   renderMovementsTable();
                   renderReports();
