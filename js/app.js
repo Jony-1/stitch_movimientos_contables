@@ -553,11 +553,11 @@
   }
 
   // --- Renderers por página ---
-  function renderMovementsTable() {
+  async function renderMovementsTable() {
     var tbody = document.querySelector("main table tbody");
     if (!tbody) return;
-
-    var rows = getMovements();
+    const response = await fetch("/api/movements");
+    const rows = await response.json(); 
     tbody.innerHTML = rows
       .map(function (r) {
         var typeBadge =
