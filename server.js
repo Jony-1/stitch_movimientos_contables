@@ -15,7 +15,7 @@ app.use(cors());
 app.use(express.json());
 
 // Servir archivos estáticos (tu frontend actual)
-app.use(express.static(__dirname)); // sirve index.html, assets/, js/, partials/, etc.
+app.use(express.static(__dirname)); // index.html, assets/, js/, partials/, etc.
 
 // ---------- API MOVEMENTS ----------
 
@@ -86,9 +86,7 @@ app.delete("/api/movements/:id", async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
 
-    const result = await pool.query("DELETE FROM movements WHERE id = $1", [
-      id
-    ]);
+    const result = await pool.query("DELETE FROM movements WHERE id = $1", [id]);
 
     if (result.rowCount === 0) {
       return res.status(404).json({ error: "Movimiento no encontrado" });
@@ -169,9 +167,7 @@ app.delete("/api/invoices/:id", async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
 
-    const result = await pool.query("DELETE FROM invoices WHERE id = $1", [
-      id
-    ]);
+    const result = await pool.query("DELETE FROM invoices WHERE id = $1", [id]);
 
     if (result.rowCount === 0) {
       return res.status(404).json({ error: "Factura no encontrada" });
@@ -184,8 +180,13 @@ app.delete("/api/invoices/:id", async (req, res) => {
   }
 });
 
-// Fallback: cualquier ruta que no empiece por /api devuelve index.html
+// ---------- SPA fallback (DESPUÉS de /api) ----------
+// Cualquier ruta que NO sea /api, devuelve index.html (para tu frontend)
 app.get("*", (req, res) => {
+  // Si parece archivo (tiene extensión) y no existe, mejor 404
+  const looksLikeFile = path.extname(req.path) !== "";
+  if (looksLikeFile) return res.status(404).send("Not found");
+
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
