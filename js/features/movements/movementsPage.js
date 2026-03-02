@@ -38,12 +38,12 @@ async function renderMovementsTable() {
 
     return (
       '<tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50">' +
-      '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">' + (r.date || "") + "</td>" +
-      '<td class="px-6 py-4 whitespace-nowrap text-sm">' + typeBadge + "</td>" +
-      '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">' + (r.category || "") + "</td>" +
-      '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">' + (r.description || "") + "</td>" +
-      '<td class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium">' + money(r.amount) + "</td>" +
-      '<td class="px-6 py-4 whitespace-nowrap text-sm">' + statusBadge + actions + "</td>" +
+        '<td data-label="Fecha" class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">' + (r.date || "") + "</td>" +
+        '<td data-label="Tipo" class="px-6 py-4 whitespace-nowrap text-sm">' + typeBadge + "</td>" +
+        '<td data-label="Categoría" class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">' + (r.category || "") + "</td>" +
+        '<td data-label="Descripción" class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">' + (r.description || "") + "</td>" +
+        '<td data-label="Monto" class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium">' + money(r.amount) + "</td>" +
+        '<td data-label="Estado" class="px-6 py-4 whitespace-nowrap text-sm">' + statusBadge + actions + "</td>" +
       "</tr>"
     );
   }).join("");

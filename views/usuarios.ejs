@@ -1,0 +1,132 @@
+<%- include("layout", { title, active, body: ` <div class="max-w-6xl mx-auto">
+    <div class="flex items-center justify-between gap-4 mb-6">
+        <div>
+            <h1 class="text-3xl font-black text-gray-900 dark:text-white">Gestión de Usuarios</h1>
+            <p class="text-gray-500 dark:text-gray-400">Crea, edita o desactiva usuarios del sistema.</p>
+        </div>
+
+        <button id="btn-open-user-modal"
+            class="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-white font-bold hover:bg-primary/90">
+            <span class="material-symbols-outlined">add</span>
+            Nuevo usuario
+        </button>
+    </div>
+
+    <div class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/50 overflow-hidden">
+        <table class="w-full">
+            <thead class="bg-gray-50 dark:bg-gray-900">
+                <tr>
+                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-600 dark:text-gray-300">
+                        Nombre</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-600 dark:text-gray-300">
+                        Correo</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-600 dark:text-gray-300">Rol
+                    </th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-600 dark:text-gray-300">
+                        Estado</th>
+                    <th class="px-4 py-3"></th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 dark:divide-gray-800" id="users-tbody">
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                    <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">Juan Pérez</td>
+                    <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">juan@correo.com</td>
+                    <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">Productor</td>
+                    <td class="px-4 py-3 text-sm">
+                        <span
+                            class="inline-flex items-center gap-2 rounded-full px-2.5 py-0.5 text-xs font-semibold bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300">
+                            <span class="size-2 rounded-full bg-green-500"></span> Activo
+                        </span>
+                    </td>
+                    <td class="px-4 py-3 text-right">
+                        <button class="text-gray-400 hover:text-gray-900 dark:hover:text-white">
+                            <span class="material-symbols-outlined">more_vert</span>
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="modal-user"
+        class="fixed inset-0 z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity">
+        <div class="absolute inset-0 bg-black/40"></div>
+
+        <div class="relative w-full max-w-xl p-4">
+            <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 shadow-lg">
+                <div class="flex items-start justify-between mb-4">
+                    <h2 class="text-lg font-bold text-gray-900 dark:text-white">Crear usuario</h2>
+                    <button id="btn-close-user-modal" class="text-gray-500 hover:text-gray-900 dark:hover:text-white">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+
+                <form id="form-user" class="space-y-4">
+                    <div>
+                        <label class="text-sm font-medium">Nombre</label>
+                        <input id="user-name"
+                            class="form-input w-full rounded-lg border px-3 py-2 bg-white dark:bg-gray-800" required />
+                    </div>
+
+                    <div>
+                        <label class="text-sm font-medium">Correo</label>
+                        <input id="user-email" type="email"
+                            class="form-input w-full rounded-lg border px-3 py-2 bg-white dark:bg-gray-800" required />
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-sm font-medium">Rol</label>
+                            <select id="user-role"
+                                class="form-input w-full rounded-lg border px-3 py-2 bg-white dark:bg-gray-800">
+                                <option>Productor</option>
+                                <option>Admin</option>
+                                <option>Contador</option>
+                            </select>
+                        </div>
+
+                        <div class="flex items-center gap-2 pt-6">
+                            <input id="user-active" type="checkbox" checked />
+                            <label for="user-active" class="text-sm">Activo</label>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end gap-3 pt-2">
+                        <button type="button" id="btn-cancel-user"
+                            class="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800">
+                            Cancelar
+                        </button>
+                        <button type="submit"
+                            class="px-4 py-2 rounded-lg bg-primary text-white font-bold hover:bg-primary/90">
+                            Guardar
+                        </button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const modal = document.getElementById("modal-user");
+        const openBtn = document.getElementById("btn-open-user-modal");
+        const closeBtn = document.getElementById("btn-close-user-modal");
+        const cancelBtn = document.getElementById("btn-cancel-user");
+
+        function openModal() {
+            modal.classList.remove("opacity-0", "pointer-events-none");
+            modal.classList.add("opacity-100");
+        }
+        function closeModal() {
+            modal.classList.add("opacity-0", "pointer-events-none");
+            modal.classList.remove("opacity-100");
+        }
+
+        openBtn.addEventListener("click", openModal);
+        closeBtn.addEventListener("click", closeModal);
+        cancelBtn.addEventListener("click", closeModal);
+    </script>
+    `
+    }) %>

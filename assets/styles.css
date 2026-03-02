@@ -1,4 +1,4 @@
-/* Archivo centralizado de estilos extraídos de los HTML */
+/* Archivo centralizado de estilos */
 /* Material Symbols (variación por defecto) */
 .material-symbols-outlined {
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
@@ -9,22 +9,311 @@
   fill: currentColor;
 }
 
-/* Asegurar la fuente por defecto en páginas que la usan directamente */
+/* Asegurar la fuente por defecto */
 body {
   font-family: 'Manrope', sans-serif;
 }
 
-/* Suavizado de fuentes para compatibilidad cross-browser */
+/* Suavizado de fuentes cross-browser */
 body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Clase helper: tamaño de avatar/elementos (si el proyecto no la define en otro lado) */
+/* Tamaño de elementos */
+.size-2 { width: 0.5rem; height: 0.5rem; }
 .size-8 { width: 2rem; height: 2rem; }
 .size-10 { width: 2.5rem; height: 2.5rem; }
 
-/* Pequeña corrección visual para el header email */
+/* Header email */
 .app-header-email { opacity: 0.9; }
+
+/* Prevent scroll when modal open */
+body.modal-open {
+  overflow: hidden;
+}
+
+/* Form inputs styling */
+.form-input,
+.form-select,
+.form-radio,
+.form-checkbox {
+  border-radius: 0.5rem;
+  border: 1px solid rgb(209, 213, 219);
+}
+
+.dark .form-input,
+.dark .form-select,
+.dark .form-radio,
+.dark .form-checkbox {
+  border-color: rgb(55, 65, 81);
+  background-color: rgb(31, 41, 55);
+  color: rgb(243, 244, 246);
+}
+
+/* Desktop table styles (default) */
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 800px;
+}
+
+table thead {
+  background-color: rgb(249, 250, 251);
+  display: table-header-group;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.dark table thead {
+  background-color: rgb(31, 41, 55);
+}
+
+table tbody {
+  display: table-row-group;
+}
+
+table tr {
+  display: table-row;
+  border-bottom: 1px solid rgb(229, 231, 235);
+}
+
+.dark table tr {
+  border-bottom-color: rgb(55, 65, 81);
+}
+
+table td,
+table th {
+  display: table-cell;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+table th {
+  font-weight: 600;
+  text-align: left;
+}
+
+table td::before {
+  display: none;
+}
+
+/* Action buttons in table cells - sticky on right */
+table th:last-child,
+table td:last-child {
+  text-align: right;
+  position: sticky;
+  right: 0;
+  background-color: white;
+  min-width: 120px;
+  white-space: nowrap;
+  z-index: 5;
+}
+
+.dark table th:last-child,
+.dark table td:last-child {
+  background-color: rgb(17, 24, 39);
+}
+
+table thead th:last-child {
+  background-color: rgb(249, 250, 251);
+}
+
+.dark table thead th:last-child {
+  background-color: rgb(31, 41, 55);
+}
+
+table button,
+table a {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.25rem;
+  margin-right: 0.25rem;
+  flex-shrink: 0;
+}
+
+/* Column width control for better layout */
+table th:nth-child(1),
+table td:nth-child(1) {
+  width: 140px;
+  min-width: 140px;
+}
+
+table th:nth-child(2),
+table td:nth-child(2) {
+  width: 100px;
+  min-width: 100px;
+}
+
+table th:nth-child(3),
+table td:nth-child(3) {
+  width: 120px;
+  min-width: 120px;
+}
+
+table th:nth-child(4),
+table td:nth-child(4) {
+  min-width: 150px;
+}
+
+table th:nth-child(5),
+table td:nth-child(5) {
+  width: 120px;
+  min-width: 120px;
+  text-align: right;
+}
+
+table th:nth-child(6),
+table td:nth-child(6) {
+  width: 100px;
+  min-width: 100px;
+}
+
+/* Responsive tables: Convert to cards on mobile */
+@media (max-width: 768px) {
+  table {
+    display: block;
+    width: 100%;
+    margin-bottom: 1rem;
+  }
+  
+  table thead {
+    display: none;
+  }
+  
+  table tbody {
+    display: block;
+    width: 100%;
+  }
+  
+  table tr {
+    display: block;
+    width: 100%;
+    margin-bottom: 1.5rem;
+    border: 1px solid rgb(229, 231, 235);
+    border-radius: 0.5rem;
+    padding: 0;
+    background: white;
+    overflow: hidden;
+  }
+  
+  .dark table tr {
+    border-color: rgb(55, 65, 81);
+    background-color: rgb(17, 24, 39);
+  }
+  
+  table td {
+    display: block;
+    width: 100%;
+    text-align: right;
+    padding: 0.75rem 1rem 0.75rem 50%;
+    position: relative;
+    white-space: normal;
+    border: none;
+  }
+  
+  table td:first-child {
+    padding-top: 1rem;
+  }
+  
+  table td:last-child {
+    padding-bottom: 1rem;
+  }
+  
+  table td::before {
+    content: attr(data-label);
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 45%;
+    padding: 0.75rem 0 0.75rem 1rem;
+    font-weight: 600;
+    text-align: left;
+    color: rgb(107, 114, 128);
+    background-color: rgb(249, 250, 251);
+    height: 100%;
+    display: flex;
+    align-items: center;
+  }
+  
+  .dark table td::before {
+    background-color: rgb(31, 41, 55);
+    color: rgb(156, 163, 175);
+  }
+  
+  /* Action buttons visible on mobile */
+  table td:last-child {
+    display: flex !important;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding-right: 1rem;
+    padding-left: 50%;
+  }
+}
+
+/* Better dividers on mobile */
+@media (max-width: 768px) {
+  table tbody > tr > td {
+    border-top: 1px solid rgb(229, 231, 235);
+  }
+  
+  .dark table tbody > tr > td {
+    border-color: rgb(55, 65, 81);
+  }
+  
+  table tbody > tr > td:first-child {
+    border-top: none;
+  }
+}
+
+/* Sidebar and layout adjustments */
+@media (max-width: 768px) {
+  #sidebar-container {
+    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.15);
+  }
+  
+  main {
+    width: 100%;
+  }
+}
+
+/* Modal overlay improvements */
+#sidebar-overlay {
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+
+#sidebar-overlay:not(.hidden) {
+  opacity: 1;
+}
+
+/* Ensure button text doesn't break */
+button {
+  white-space: nowrap;
+}
+
+/* Better overflow handling */
+.overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Form improvements for mobile */
+@media (max-width: 768px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="date"],
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
 
 /* Fin de styles.css */

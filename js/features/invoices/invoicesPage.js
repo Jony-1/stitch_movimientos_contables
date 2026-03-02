@@ -77,24 +77,24 @@ function renderInvoicesTable() {
     .map(function (r) {
       return (
         '<tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">' +
-        '<td class="px-4 py-3 text-gray-800 text-sm font-medium">' +
+        '<td data-label="Número" class="px-4 py-3 text-gray-800 text-sm font-medium">' +
         (r.number || "") +
         "</td>" +
-        '<td class="px-4 py-3 text-gray-500 text-sm">' +
+        '<td data-label="Proveedor/Comprador" class="px-4 py-3 text-gray-500 text-sm">' +
         (r.party || "") +
         "</td>" +
-        '<td class="px-4 py-3 text-gray-500 text-sm">' +
+        '<td data-label="Fecha" class="px-4 py-3 text-gray-500 text-sm">' +
         (r.date || "") +
         "</td>" +
-        '<td class="px-4 py-3 text-gray-500 text-sm">' +
+        '<td data-label="Monto" class="px-4 py-3 text-gray-500 text-sm">' +
         money(r.amount) +
         "</td>" +
-        '<td class="px-4 py-3 text-sm">' +
+        '<td data-label="Estado" class="px-4 py-3 text-sm">' +
         '<span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium bg-green-100 text-green-800">' +
         (r.status || "") +
         "</span>" +
         "</td>" +
-        '<td class="px-4 py-3 text-right">' +
+        '<td data-label="Acciones" class="px-4 py-3 text-right">' +
         '<button data-id="' +
         r.id +
         '" class="text-gray-400 hover:text-gray-800 mr-2 btn-inv-view"><span class="material-symbols-outlined">visibility</span></button>' +
@@ -128,12 +128,79 @@ function renderInvoicesTable() {
   });
 }
 
+import { showModal, hideModal, wireGenericModals } from "../../ui/modal.js";
+
 // ✅ ESTE ES EL EXPORT QUE TE FALTA
 export function initInvoicesPage() {
   try {
     if (!isInvoicesPage()) return;
+    wireGenericModals();
+    wireNewInvoiceButton();
     renderInvoicesTable();
   } catch (e) {
     console.warn("[invoices] init error:", e);
   }
+}
+
+// helpers for the invoice modal
+function collectInvoiceModal() {
+  var modal = document.getElementById("modal-invoice");
+  if (!modal) return null;
+  var inv = {};
+  inv.number = modal.querySelector("#inv-number").value || "";
+  inv.amount = parseFloat(modal.querySelector("#inv-amount").value || "0");
+  inv.party = modal.querySelector("#inv-party").value || "";
+  inv.date = modal.querySelector("#inv-date").value || "";
+  inv.dueDate = modal.querySelector("#inv-due").value || "";
+  inv.status = modal.querySelector("#inv-status").value || "";
+  return inv;
+}
+
+function getNextInvoiceId(list) {
+  var max = 0;
+  list.forEach(function (i) { if (i.id && i.id > max) max = i.id; });
+  return max + 1;
+}
+
+function wireNewInvoiceButton() {
+  var modal = document.getElementById("modal-invoice");
+  if (!modal) return;
+
+  // opener
+  var btn = document.getElementById("btn-new-invoice");
+  if (btn) {
+    btn.addEventListener("click", function (e) {
+      e.preventDefault();
+      try { modal.querySelector("form").reset(); } catch (e) {}
+      delete modal.dataset.editingId;
+      showModal(modal);
+    });
+  }
+
+  // submit handler
+  var form = modal.querySelector("form");
+  if (!form) return;
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    var payload = collectInvoiceModal();
+    if (!payload) return;
+    var list = getInvoicesFromLocal();
+    var editingId = modal.dataset.editingId ? parseInt(modal.dataset.editingId, 10) : null;
+    if (editingId) {
+      // update existing
+      list = list.map(function (inv) {
+        if (inv.id === editingId) {
+          return Object.assign({ id: editingId }, payload);
+        }
+        return inv;
+      });
+    } else {
+      payload.id = getNextInvoiceId(list);
+      list.push(payload);
+    }
+    writeInvoicesToLocal(list);
+    hideModal(modal);
+    renderInvoicesTable();
+  });
 }

@@ -1,0 +1,60 @@
+<aside class="flex h-screen w-64 flex-col justify-between border-r border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-background-dark overflow-y-auto">
+  <div class="flex flex-col gap-8">
+    <div class="flex items-center gap-3 px-2">
+      <div class="size-8 text-primary">
+        <svg class="icon-grass" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path
+            d="M20,22H4a1,1,0,0,1,0-2H20a1,1,0,0,1,0,2Zm-1-3.68a1,1,0,0,0-1,.12L16.27,20H7.73l-1.74-1.56a1,1,0,0,0-1.28,1.54L6.15,21a1,1,0,0,0,.85.5h8a1,1,0,0,0,.85-.5l1.44-1.28A1,1,0,0,0,19,18.32ZM12,14.5A5.5,5.5,0,1,1,17.5,9,5.51,5.51,0,0,1,12,14.5Zm0-9A3.5,3.5,0,1,0,15.5,9,3.5,3.5,0,0,0,12,5.5ZM6.5,10.5a4.5,4.5,0,1,1,4-4.47V2.5a1,1,0,0,0-2,0V6A4.49,4.49,0,0,1,6.5,10.5Zm0-7A2.5,2.5,0,1,0,9,6,2.5,2.5,0,0,0,6.5,3.5Zm11,7a4.5,4.5,0,1,1,4-4.47V2.5a1,1,0,1,0-2,0V6A4.49,4.49,0,0,1,17.5,10.5Zm0-7A2.5,2.5,0,1,0,20,6,2.5,2.5,0,0,0,17.5,3.5Z">
+          </path>
+        </svg>
+      </div>
+      <h1 class="text-lg font-bold text-[#111418] dark:text-white">AgroSostenible</h1>
+    </div>
+
+    <nav class="flex flex-col gap-2">
+      <a class="flex items-center gap-3 rounded-lg px-3 py-2 <%= active === 'dashboard' ? 'bg-primary/20 text-primary' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800' %>"
+        href="/dashboard">
+        <span class="material-symbols-outlined text-2xl">home</span>
+        <p class="text-sm font-medium">Inicio</p>
+      </a>
+
+      <a class="flex items-center gap-3 rounded-lg px-3 py-2 <%= active === 'movimientos' ? 'bg-primary/20 text-primary' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800' %>"
+        href="/movimientos">
+        <span class="material-symbols-outlined text-2xl">potted_plant</span>
+        <p class="text-sm font-medium">Movimientos</p>
+      </a>
+
+      <a class="flex items-center gap-3 rounded-lg px-3 py-2 <%= active === 'facturas' ? 'bg-primary/20 text-primary' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800' %>"
+        href="/facturas">
+        <span class="material-symbols-outlined text-2xl">receipt_long</span>
+        <p class="text-sm font-medium">Facturas</p>
+      </a>
+
+      <a class="flex items-center gap-3 rounded-lg px-3 py-2 <%= active === 'reportes' ? 'bg-primary/20 text-primary' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800' %>"
+        href="/reportes">
+        <span class="material-symbols-outlined text-2xl">bar_chart</span>
+        <p class="text-sm font-medium">Reportes</p>
+      </a>
+
+      <a class="flex items-center gap-3 rounded-lg px-3 py-2 <%= active === 'configuraciones' ? 'bg-primary/20 text-primary' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800' %>"
+        href="/configuraciones">
+        <span class="material-symbols-outlined text-2xl">settings</span>
+        <p class="text-sm font-medium">Configuración</p>
+      </a>
+
+      <a class="flex items-center gap-3 rounded-lg px-3 py-2 <%= active === 'usuarios' ? 'bg-primary/20 text-primary' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800' %>"
+        href="/usuarios">
+        <span class="material-symbols-outlined text-2xl">group</span>
+        <p class="text-sm font-medium">Usuarios</p>
+      </a>
+    </nav>
+  </div>
+
+  <div class="flex flex-col gap-1">
+    <a class="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+      href="/">
+      <span class="material-symbols-outlined text-2xl">logout</span>
+      <p class="text-sm font-medium">Cerrar Sesión</p>
+    </a>
+  </div>
+</aside>
