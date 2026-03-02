@@ -1,0 +1,83 @@
+<%- include("layout", { title: "Acceso a Productores" , active: "login" , body: ` <div
+    class="px-4 flex flex-1 justify-center items-center py-10 sm:py-20">
+    <div class="layout-content-container flex flex-col w-full max-w-md flex-1">
+        <div class="flex flex-col items-center justify-center gap-8">
+            <div class="flex flex-col items-center gap-2">
+                <div class="flex items-center justify-center p-2 bg-primary/10 rounded-xl">
+                    <svg class="text-primary h-16 w-16" fill="none" height="64" stroke="currentColor"
+                        stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" viewBox="0 0 24 24" width="64"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path d="M11 15h2a2 2 0 1 0 0-4h-3c-.6 0-1.1.2-1.4.6L3 17"></path>
+                        <path d="M7 21v-2a2 2 0 1 1 4 0v2"></path>
+                        <path d="M21 17l-3.4-6.4a1.1 1.1 0 0 0-1.8 0L12.5 15H11"></path>
+                        <path d="M4.2 11.2 3 9"></path>
+                        <path d="M12 21a9 9 0 0 0 9-9"></path>
+                        <path d="M3.2 5.2A9 9 0 0 1 12 3"></path>
+                    </svg>
+                </div>
+                <div class="flex min-w-72 flex-col gap-3 text-center">
+                    <p class="text-slate-900 dark:text-white text-4xl font-black leading-tight tracking-[-0.033em]">
+                        Acceso a Productores
+                    </p>
+                    <p class="text-slate-500 dark:text-slate-400 text-base font-normal leading-normal">
+                        Ingrese sus credenciales para continuar
+                    </p>
+                </div>
+            </div>
+
+            <form class="flex w-full flex-col gap-4" method="POST" action="/login">
+                <label class="flex flex-col w-full">
+                    <p class="text-slate-900 dark:text-white text-base font-medium leading-normal pb-2">Correo del
+                        productor</p>
+                    <div class="relative flex w-full flex-1 items-stretch">
+                        <span
+                            class="material-symbols-outlined text-slate-400 dark:text-slate-500 absolute left-3 top-1/2 -translate-y-1/2">mail</span>
+                        <input name="email"
+                            class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-slate-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-300 dark:border-slate-700 bg-white dark:bg-background-dark h-14 placeholder:text-slate-500 dark:placeholder:text-slate-400 pl-11 pr-4 text-base font-normal leading-normal"
+                            placeholder="su.correo@ejemplo.com" type="email" required />
+                    </div>
+                </label>
+
+                <label class="flex flex-col w-full">
+                    <p class="text-slate-900 dark:text-white text-base font-medium leading-normal pb-2">Contraseña</p>
+                    <div class="relative flex w-full flex-1 items-stretch">
+                        <span
+                            class="material-symbols-outlined text-slate-400 dark:text-slate-500 absolute left-3 top-1/2 -translate-y-1/2">lock</span>
+                        <input id="password" name="password"
+                            class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-slate-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-300 dark:border-slate-700 bg-white dark:bg-background-dark h-14 placeholder:text-slate-500 dark:placeholder:text-slate-400 pl-11 pr-11 text-base font-normal leading-normal"
+                            placeholder="Ingrese su contraseña" type="password" required />
+                        <button type="button" aria-label="Mostrar u ocultar contraseña"
+                            class="text-slate-500 dark:text-slate-400 absolute right-3 top-1/2 -translate-y-1/2"
+                            onclick="const p=document.getElementById('password'); p.type = (p.type==='password'?'text':'password');">
+                            <span class="material-symbols-outlined">visibility</span>
+                        </button>
+                    </div>
+                </label>
+
+                <div class="flex justify-end">
+                    <a class="text-primary dark:text-primary/90 hover:underline text-sm font-medium leading-normal"
+                        href="/configuraciones">
+                        ¿Olvidaste tu contraseña?
+                    </a>
+                </div>
+
+                <button
+                    class="flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap px-6 py-4 text-base font-semibold leading-none text-white rounded-lg bg-primary hover:bg-primary/90 transition-colors w-full h-14">
+                    Iniciar sesión
+                </button>
+
+                <div class="flex items-center justify-center gap-2 pt-2">
+                    <p class="text-slate-500 dark:text-slate-400 text-sm font-normal leading-normal">¿Es su primera vez
+                        aquí?</p>
+                    <a class="text-primary dark:text-primary/90 hover:underline text-sm font-semibold leading-normal"
+                        href="/usuarios">
+                        Crear cuenta
+                    </a>
+                </div>
+            </form>
+
+        </div>
+    </div>
+    </div>
+    `
+    }) %>

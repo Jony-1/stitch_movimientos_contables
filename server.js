@@ -14,6 +14,10 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
+app.get("/", (req, res) => {
+  res.render("login", { title: "Login" });
+});
+
 app.get("/dashboard", (req, res) => {
   res.render("dashboard", { title: "Dashboard", active: "dashboard" });
 });
