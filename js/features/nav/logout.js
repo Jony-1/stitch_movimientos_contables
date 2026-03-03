@@ -7,10 +7,12 @@ export function initLogoutLinks() {
       try {
         var t = (a.innerText || "").trim().toLowerCase();
         if (t === "cerrar sesión" || t === "cerrar sesion" || t === "logout") {
-          a.addEventListener("click", function (e) {
+          a.addEventListener("click", async function (e) {
             e.preventDefault();
-            sessionStorage.removeItem("stitch_user");
-            window.location.href = a.getAttribute("href") || "index.html";
+            try {
+              await fetch("/logout", { method: "POST" });
+            } catch {}
+            window.location.href = a.getAttribute("href") || "/";
           });
         }
       } catch (e) {}

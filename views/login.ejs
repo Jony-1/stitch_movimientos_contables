@@ -26,6 +26,7 @@
             </div>
 
             <form class="flex w-full flex-col gap-4" method="POST" action="/login">
+                ${error ? `<div class="text-red-600 text-sm mb-2">${error}</div>` : ''}
                 <label class="flex flex-col w-full">
                     <p class="text-slate-900 dark:text-white text-base font-medium leading-normal pb-2">Correo del
                         productor</p>

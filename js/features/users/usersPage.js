@@ -1,50 +1,45 @@
 // js/features/users/usersPage.js
 "use strict";
 
-// Si todavía NO has migrado users a API, puedes dejarlo funcionando con localStorage.
-// Esto evita que app.js truene por falta de export.
+// Utiliza la API REST para gestionar usuarios en lugar de localStorage
+async function getUsers() {
+  const res = await fetch("/api/users");
+  if (!res.ok) throw new Error("failed to fetch users");
+  return res.json();
+}
 
-function dbRead(DB_KEY) {
-  try {
-    return JSON.parse(localStorage.getItem(DB_KEY) || "{}");
-  } catch {
-    return {};
+async function addUser(u) {
+  const res = await fetch("/api/users", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(u),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => {});
+    throw new Error(err && err.error ? err.error : "error creating user");
   }
+  return res.json();
 }
 
-function dbWrite(DB_KEY, obj) {
-  localStorage.setItem(DB_KEY, JSON.stringify(obj));
+async function updateUser(id, changes) {
+  const res = await fetch(`/api/users/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(changes),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => {});
+    throw new Error(err && err.error ? err.error : "error updating user");
+  }
+  return res.json();
 }
 
-function getUsers(DB_KEY) {
-  return (dbRead(DB_KEY).users || []).slice().sort((a, b) => a.id - b.id);
-}
-
-function addUser(DB_KEY, u) {
-  const db = dbRead(DB_KEY);
-  db.users = db.users || [];
-  u.id = (db.users.reduce((m, x) => Math.max(m, x.id || 0), 0) || 0) + 1;
-  u.active = typeof u.active === "undefined" ? true : !!u.active;
-  u.createdAt = u.createdAt || new Date().toISOString();
-  db.users.push(u);
-  dbWrite(DB_KEY, db);
-  return u;
-}
-
-function updateUser(DB_KEY, id, changes) {
-  const db = dbRead(DB_KEY);
-  db.users = db.users || [];
-  const idx = db.users.findIndex((x) => x.id === id);
-  if (idx === -1) return null;
-  db.users[idx] = Object.assign({}, db.users[idx], changes);
-  dbWrite(DB_KEY, db);
-  return db.users[idx];
-}
-
-function deleteUser(DB_KEY, id) {
-  const db = dbRead(DB_KEY);
-  db.users = (db.users || []).filter((x) => x.id !== id);
-  dbWrite(DB_KEY, db);
+async function deleteUser(id) {
+  const res = await fetch(`/api/users/${id}`, { method: "DELETE" });
+  if (!res.ok) {
+    const err = await res.json().catch(() => {});
+    throw new Error(err && err.error ? err.error : "error deleting user");
+  }
 }
 
 function getRequests(DB_KEY) {
@@ -98,11 +93,18 @@ function ensureAdminRequestIfNoSession(DB_KEY) {
   }
 }
 
-function renderUsers(DB_KEY) {
+async function renderUsers() {
   const container = document.getElementById("users-table-container");
   if (!container) return;
 
-  const rows = getUsers(DB_KEY);
+  let rows = [];
+  try {
+    rows = await getUsers();
+  } catch (e) {
+    container.innerHTML = `<div class="text-sm text-red-600">Error cargando usuarios: ${e.message}</div>`;
+    return;
+  }
+
   if (!rows.length) {
     container.innerHTML =
       '<div class="text-sm text-gray-500">No hay usuarios. Puedes crear uno con "Nuevo Usuario".</div>';
@@ -143,101 +145,69 @@ function renderUsers(DB_KEY) {
   container.innerHTML = html;
 
   container.querySelectorAll(".btn-user-del").forEach((b) => {
-    b.addEventListener("click", () => {
+    b.addEventListener("click", async () => {
       const id = parseInt(b.getAttribute("data-id"), 10);
       if (!confirm("Eliminar usuario #" + id + "?")) return;
-      deleteUser(DB_KEY, id);
-      renderUsers(DB_KEY);
+      try {
+        await deleteUser(id);
+        await renderUsers();
+      } catch (e) {
+        alert("Error: " + e.message);
+      }
     });
   });
 
-  // Edit modal (mínimo): por ahora solo alert para no romper
   container.querySelectorAll(".btn-user-edit").forEach((b) => {
-    b.addEventListener("click", () => {
+    b.addEventListener("click", async () => {
       const id = parseInt(b.getAttribute("data-id"), 10);
-      const u = getUsers(DB_KEY).find((x) => x.id === id);
+      let u;
+      try {
+        const all = await getUsers();
+        u = all.find((x) => x.id === id);
+      } catch {
+        return alert("Error al obtener usuario");
+      }
       if (!u) return alert("Usuario no encontrado");
       alert("Editar usuario pendiente de migración.\nID: " + u.id);
     });
   });
 }
 
-function renderRequests(DB_KEY) {
-  const box = document.getElementById("users-requests");
-  if (!box) return;
-
-  const reqs = getRequests(DB_KEY).filter((r) => r.status === "pending");
-  if (!reqs.length) {
-    box.innerHTML = '<div class="text-sm text-gray-500">No hay solicitudes pendientes.</div>';
-    return;
-  }
-
-  const html =
-    '<div class="space-y-3">' +
-    reqs
-      .map((r) => {
-        return (
-          '<div class="p-3 rounded-md border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/50 flex justify-between items-start">' +
-          "<div>" +
-          `<div class="text-sm font-medium">${r.name || ""} <span class="text-xs text-gray-500">(${r.email ||
-            ""})</span></div>` +
-          `<div class="text-xs text-gray-500">Rol: ${r.requestedRole || ""} • ${new Date(
-            r.createdAt || ""
-          ).toLocaleString()}</div>` +
-          `<div class="text-sm text-gray-700 mt-2">${r.note || ""}</div>` +
-          "</div>" +
-          '<div class="flex flex-col gap-2">' +
-          `<button data-id="${r.id}" class="btn-req-approve inline-flex items-center px-3 py-1 rounded bg-green-100 text-green-800">Aprobar</button>` +
-          `<button data-id="${r.id}" class="btn-req-reject inline-flex items-center px-3 py-1 rounded bg-red-100 text-red-800">Rechazar</button>` +
-          "</div>" +
-          "</div>"
-        );
-      })
-      .join("") +
-    "</div>";
-
-  box.innerHTML = html;
-
-  box.querySelectorAll(".btn-req-approve").forEach((b) => {
-    b.addEventListener("click", () => {
-      const id = parseInt(b.getAttribute("data-id"), 10);
-      const req = getRequests(DB_KEY).find((x) => x.id === id);
-      if (!req) return;
-
-      addUser(DB_KEY, {
-        name: req.name || req.email,
-        email: req.email,
-        role: req.requestedRole || "Productor",
-        active: true,
-      });
-
-      updateRequest(DB_KEY, id, { status: "approved" });
-      renderRequests(DB_KEY);
-      renderUsers(DB_KEY);
-    });
-  });
-
-  box.querySelectorAll(".btn-req-reject").forEach((b) => {
-    b.addEventListener("click", () => {
-      const id = parseInt(b.getAttribute("data-id"), 10);
-      if (!confirm("Rechazar solicitud #" + id + "?")) return;
-      updateRequest(DB_KEY, id, { status: "rejected" });
-      renderRequests(DB_KEY);
-    });
-  });
+// por ahora no gestionamos solicitudes desde el servidor, así que dejamos los helpers en silencio
+function renderRequests() {
+  // esta app ya no usa solicitudes automáticas
 }
 
 function initUsersPage() {
-  // MISMA KEY que usabas antes
-  const DB_KEY = "stitch_db";
-
-  // Solo corre en configuraciones.html
+  // solo actúa en la página de usuarios o configuraciones
   const file = (window.location.pathname || "").split("/").pop() || "index.html";
-  if (!/configuraci/i.test(file)) return;
+  if (!/usuari|configuraci/i.test(file)) return;
 
-  ensureAdminRequestIfNoSession(DB_KEY);
-  renderUsers(DB_KEY);
-  renderRequests(DB_KEY);
+  // renderizamos lista actual
+  renderUsers().catch((e) => console.error(e));
+
+  // formulario de creación/edición
+  const form = document.getElementById("form-user");
+  if (form) {
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const u = {
+        name: document.getElementById("user-name").value,
+        email: document.getElementById("user-email").value,
+        role: document.getElementById("user-role").value,
+        active: document.getElementById("user-active").checked,
+      };
+      try {
+        await addUser(u);
+        // cerrar modal si existe
+        const modal = document.getElementById("modal-user");
+        if (modal) modal.classList.add("opacity-0", "pointer-events-none");
+        await renderUsers();
+      } catch (err) {
+        alert("Error creando usuario: " + err.message);
+      }
+    });
+  }
 }
 
-export { initUsersPage, ensureAdminRequestIfNoSession };
+export { initUsersPage };

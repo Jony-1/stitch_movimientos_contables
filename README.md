@@ -53,6 +53,13 @@ Abrir la página deseada en el navegador (por ejemplo `reportes.html`, `facturas
 ## Flow y uso básico
 
 - Login temporal: en la página de login (si existe un formulario), hay credenciales temporales incluidas en el script. Los valores por defecto:
+
+  - **Ahora se usa autenticación real**: la base de datos incluye una tabla `users` y se inicializa con un usuario administrador.
+    - Email: `admin@example.com`
+    - Contraseña: `admin123`
+
+  Ejecuta `npm install` tras añadir dependencias (`bcrypt`, `express-session`).
+
   - Usuario: `natalia@demo.com`
   - Contraseña: `demo1234`
   - Tras iniciar sesión se guarda `sessionStorage.stitch_user` y se redirige a `dashboard.html`.

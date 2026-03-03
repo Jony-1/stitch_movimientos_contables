@@ -15,7 +15,6 @@ document.addEventListener("DOMContentLoaded", async function () {
   await loadHeaderPartial();
   seedIfEmpty();
 
-  try { ensureAdminRequestIfNoSession(); } catch (e) {}
 
   initLoginTemp();
   initLogoutLinks();
@@ -27,7 +26,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   if (/movimientos/i.test(file)) initMovementsPage();
   if (/facturas/i.test(file)) initInvoicesPage();
-  if (/configuraci/i.test(file)) initUsersPage();
+  if (/usuarios|configuraci/i.test(file)) initUsersPage();
   if (/reportes/i.test(file)) initReportsPage();
 
   runPageSanityChecks();
