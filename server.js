@@ -5,7 +5,7 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 const session = require("express-session");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 const pool = require("./db");
 
 const app = express();
