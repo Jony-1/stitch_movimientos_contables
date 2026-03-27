@@ -1,0 +1,108 @@
+---
+import AuthLayout from "../layouts/AuthLayout.astro";
+---
+
+<AuthLayout title="Acceso a Productores">
+  <div class="relative z-10 min-h-screen px-4 py-8 sm:py-12">
+    <div class="mx-auto grid min-h-[calc(100vh-4rem)] w-full max-w-6xl items-center gap-8 lg:grid-cols-[1.05fr_0.95fr]">
+      <section class="relative overflow-hidden rounded-[2rem] border border-white/20 bg-[linear-gradient(135deg,#0f172a_0%,#123d6e_45%,#137fec_100%)] p-8 text-white shadow-2xl sm:p-10 lg:p-12">
+        <div class="absolute -right-24 top-8 h-56 w-56 rounded-full bg-white/10 blur-3xl"></div>
+        <div class="absolute -bottom-24 left-0 h-56 w-56 rounded-full bg-emerald-400/20 blur-3xl"></div>
+        <div class="relative flex h-full flex-col justify-between gap-10">
+          <div class="flex items-center gap-3">
+            <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15 ring-1 ring-white/20">
+              <svg class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" xmlns="http://www.w3.org/2000/svg">
+                <path d="M11 15h2a2 2 0 1 0 0-4h-3c-.6 0-1.1.2-1.4.6L3 17"></path>
+                <path d="M7 21v-2a2 2 0 1 1 4 0v2"></path>
+                <path d="M21 17l-3.4-6.4a1.1 1.1 0 0 0-1.8 0L12.5 15H11"></path>
+                <path d="M4.2 11.2 3 9"></path>
+                <path d="M12 21a9 9 0 0 0 9-9"></path>
+                <path d="M3.2 5.2A9 9 0 0 1 12 3"></path>
+              </svg>
+            </div>
+            <div>
+              <p class="text-xs uppercase tracking-[0.35em] text-white/70">Stitch</p>
+              <h1 class="text-3xl font-black tracking-[-0.04em] sm:text-4xl">Productores y contabilidad</h1>
+            </div>
+          </div>
+
+          <div class="max-w-xl space-y-4">
+            <p class="text-lg leading-relaxed text-white/85 sm:text-xl">
+              Un acceso simple para recuperar el control de movimientos, facturas, reportes y usuarios.
+            </p>
+            <div class="grid gap-3 sm:grid-cols-3">
+              <div class="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm">
+                <p class="text-2xl font-bold">01</p>
+                <p class="text-sm text-white/75">Sesión estable</p>
+              </div>
+              <div class="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm">
+                <p class="text-2xl font-bold">02</p>
+                <p class="text-sm text-white/75">Panel operativo</p>
+              </div>
+              <div class="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm">
+                <p class="text-2xl font-bold">03</p>
+                <p class="text-sm text-white/75">Datos seguros</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3 text-sm text-white/70">
+            <span class="inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400"></span>
+            Base visual restaurada sobre Astro
+          </div>
+        </div>
+      </section>
+
+      <section class="surface-card-strong rounded-[2rem] p-6 sm:p-8 lg:p-10 dark:bg-slate-950/85">
+        <div class="mx-auto flex w-full max-w-md flex-col gap-8">
+          <div class="space-y-2 text-center">
+            <div class="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <span class="material-symbols-outlined text-3xl">lock</span>
+            </div>
+            <h2 class="text-3xl font-black tracking-[-0.04em] text-slate-900 dark:text-slate-100">Acceso a Productores</h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400">Ingrese sus credenciales para continuar</p>
+          </div>
+
+          <form id="login-form" class="flex w-full flex-col gap-4" method="POST" action="/login">
+            <div id="login-error" class="min-h-5 text-sm text-red-600 dark:text-red-400"></div>
+
+            <label class="flex w-full flex-col">
+              <p class="pb-2 text-base font-medium text-slate-900 dark:text-slate-100">Correo del productor</p>
+              <div class="relative flex w-full items-stretch">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">mail</span>
+                <input name="email" class="form-input flex h-14 w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl border border-slate-300 bg-white pl-11 pr-4 text-base text-slate-900 placeholder:text-slate-500 focus:border-primary focus:outline-0 focus:ring-2 focus:ring-primary/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500" placeholder="su.correo@ejemplo.com" type="email" required />
+              </div>
+            </label>
+
+            <label class="flex w-full flex-col">
+              <p class="pb-2 text-base font-medium text-slate-900 dark:text-slate-100">Contraseña</p>
+              <div class="relative flex w-full items-stretch">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">lock</span>
+                <input id="password" name="password" class="form-input flex h-14 w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl border border-slate-300 bg-white pl-11 pr-11 text-base text-slate-900 placeholder:text-slate-500 focus:border-primary focus:outline-0 focus:ring-2 focus:ring-primary/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500" placeholder="Ingrese su contraseña" type="password" required />
+                <button type="button" aria-label="Mostrar u ocultar contraseña" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" onclick="const p=document.getElementById('password'); p.type = (p.type==='password'?'text':'password');">
+                  <span class="material-symbols-outlined">visibility</span>
+                </button>
+              </div>
+            </label>
+
+            <div class="flex justify-end">
+              <a class="text-sm font-medium text-primary hover:underline dark:text-sky-400" href="/configuraciones">¿Olvidaste tu contraseña?</a>
+            </div>
+
+            <button class="flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-4 text-base font-semibold leading-none text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary/90">Iniciar sesión</button>
+
+            <div class="flex items-center justify-center gap-2 pt-2">
+              <p class="text-sm text-slate-500 dark:text-slate-400">¿Es su primera vez aquí?</p>
+              <a class="text-sm font-semibold text-primary hover:underline dark:text-sky-400" href="/register">Crear cuenta</a>
+            </div>
+          </form>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initLoginPage } from "../scripts/login-page.js";
+    initLoginPage();
+  </script>
+</AuthLayout>

@@ -1,0 +1,106 @@
+
+> stitch-movimientos-contables@1.0.0 prestart
+> npm run build:web
+
+
+> stitch-movimientos-contables@1.0.0 build:web
+> astro build
+
+[2m09:10:38[22m [34m[types][39m Generated [2m89ms[22m
+[2m09:10:38[22m [34m[build][39m output: [34m"static"[39m
+[2m09:10:38[22m [34m[build][39m mode: [34m"static"[39m
+[2m09:10:38[22m [34m[build][39m directory: [34mC:\Users\jonat\Downloads\stitch_movimientos_contables\stitch_movimientos_contables\dist\[39m
+[2m09:10:38[22m [34m[build][39m Collecting build info...
+[2m09:10:38[22m [34m[build][39m [32m✓ Completed in 136ms.[39m
+[2m09:10:38[22m [34m[build][39m Building static entrypoints...
+[33m[1m09:10:41[22m [WARN] [vite][39m [33m"matchHostname", "matchPathname", "matchPort" and "matchProtocol" are imported from external module "@astrojs/internal-helpers/remote" but never used in "node_modules/astro/dist/assets/utils/index.js".[39m
+[2m09:10:41[22m [34m[vite][39m [32m✓ built in 2.55s[39m
+[2m09:10:41[22m [34m[vite][39m [32m✓ built in 5ms[39m
+[2m09:10:41[22m [34m[build][39m Rearranging server assets...
+
+[42m[30m generating static routes [39m[49m
+[2m09:10:41[22m   [34m├─[39m [2m/configuraciones/index.html[22m [2m(+31ms)[22m 
+[2m09:10:41[22m   [34m├─[39m [2m/dashboard/index.html[22m [2m(+8ms)[22m 
+[2m09:10:41[22m   [34m├─[39m [2m/facturas/index.html[22m [2m(+8ms)[22m 
+[2m09:10:41[22m   [34m├─[39m [2m/login/index.html[22m [2m(+10ms)[22m 
+[2m09:10:41[22m   [34m├─[39m [2m/movimientos/index.html[22m [2m(+8ms)[22m 
+[2m09:10:41[22m   [34m├─[39m [2m/register/index.html[22m [2m(+8ms)[22m 
+[2m09:10:41[22m   [34m├─[39m [2m/reportes/index.html[22m [2m(+11ms)[22m 
+[2m09:10:41[22m   [34m├─[39m [2m/usuarios/index.html[22m [2m(+8ms)[22m 
+[2m09:10:41[22m   [34m├─[39m [2m/index.html[22m [2m(+8ms)[22m 
+[2m09:10:41[22m [32m✓ Completed in 134ms.
+[39m
+[2m09:10:41[22m [34m[build][39m [32m✓ Completed in 2.84s.[39m
+[2m09:10:41[22m [34m[build][39m 9 page(s) built in [1m2.99s[22m
+[2m09:10:41[22m [34m[build][39m [1mComplete![22m
+
+> stitch-movimientos-contables@1.0.0 start
+> node server.js
+
+Servidor escuchando en puerto 3000
+Error inicializando base de datos: error: function lower(movement_type) does not exist
+    at C:\Users\jonat\Downloads\stitch_movimientos_contables\stitch_movimientos_contables\node_modules\pg-pool\index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async initDb (C:\Users\jonat\Downloads\stitch_movimientos_contables\stitch_movimientos_contables\server.js:824:5) {
+  length: 213,
+  severity: 'ERROR',
+  code: '42883',
+  detail: undefined,
+  hint: 'No function matches the given name and argument types. You might need to add explicit type casts.',
+  position: '49',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_func.c',
+  line: '629',
+  routine: 'ParseFuncOrColumn'
+}
+Error GET /api/movements error: function lower(movement_type) does not exist
+    at C:\Users\jonat\Downloads\stitch_movimientos_contables\stitch_movimientos_contables\node_modules\pg-pool\index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async C:\Users\jonat\Downloads\stitch_movimientos_contables\stitch_movimientos_contables\server.js:516:20 {
+  length: 213,
+  severity: 'ERROR',
+  code: '42883',
+  detail: undefined,
+  hint: 'No function matches the given name and argument types. You might need to add explicit type casts.',
+  position: '74',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_func.c',
+  line: '629',
+  routine: 'ParseFuncOrColumn'
+}
+Error POST /api/movements error: new row for relation "movements" violates check constraint "movements_amount_check"
+    at C:\Users\jonat\Downloads\stitch_movimientos_contables\stitch_movimientos_contables\node_modules\pg-pool\index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async C:\Users\jonat\Downloads\stitch_movimientos_contables\stitch_movimientos_contables\server.js:589:20 {
+  length: 350,
+  severity: 'ERROR',
+  code: '23514',
+  detail: 'Failing row contains (35, 2026-03-27, gasto, Pruebas, Movimiento temporal, -1000.00, Registrado, 2026-03-27 14:10:56.248938+00, 2026-03-27 14:10:56.248938+00).',
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: 'public',
+  table: 'movements',
+  column: undefined,
+  dataType: undefined,
+  constraint: 'movements_amount_check',
+  file: 'execMain.c',
+  line: '2074',
+  routine: 'ExecConstraints'
+}

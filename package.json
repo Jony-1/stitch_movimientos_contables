@@ -4,17 +4,25 @@
   "description": "Backend sencillo para movimientos contables",
   "main": "server.js",
   "scripts": {
+    "prestart": "npm run build:web",
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev:api": "nodemon server.js",
+    "dev:web": "astro dev",
+    "dev": "concurrently -n api,web -c green,cyan \"npm run dev:api\" \"npm run dev:web\"",
+    "build:web": "astro build",
+    "preview:web": "astro preview"
   },
   "dependencies": {
+    "@tailwindcss/vite": "^4.2.2",
+    "astro": "^6.1.1",
     "bcryptjs": "^2.4.3",
+    "concurrently": "^9.2.1",
     "cors": "^2.8.5",
     "dotenv": "^16.4.0",
-    "ejs": "^4.0.1",
     "express": "^4.19.0",
     "express-session": "^1.19.0",
-    "pg": "^8.11.0"
+    "pg": "^8.11.0",
+    "tailwindcss": "^4.2.2"
   },
   "devDependencies": {
     "nodemon": "^3.0.0"

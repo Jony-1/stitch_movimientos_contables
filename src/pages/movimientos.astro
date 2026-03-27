@@ -1,0 +1,133 @@
+---
+import AppLayout from "../layouts/AppLayout.astro";
+---
+
+<AppLayout title="Movimientos" active="movimientos" name="Usuario" role="Productor" email="user@demo.com">
+  <div class="mx-auto flex max-w-7xl flex-col gap-6">
+    <section class="surface-card rounded-3xl p-6 sm:p-8">
+      <div class="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p class="text-xs uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">Control diario</p>
+          <h1 class="text-4xl font-black text-slate-900 dark:text-white">Movimientos de Cultivo</h1>
+          <p class="text-slate-500 dark:text-slate-400">Registra ingresos, gastos y cambios del ciclo en una sola vista.</p>
+          <p id="movements-status" class="mt-2 text-sm text-slate-500 dark:text-slate-400"></p>
+        </div>
+        <button id="btn-new-movement" class="flex min-w-[160px] items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-primary/90">
+          <span class="material-symbols-outlined text-base">add</span>
+          <span class="truncate">Nuevo movimiento</span>
+        </button>
+      </div>
+    </section>
+
+    <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div class="surface-card p-5">
+        <p class="text-xs uppercase tracking-[0.25em] text-slate-500 dark:text-slate-400">Movimientos</p>
+        <p id="movements-total-count" class="mt-2 text-3xl font-black text-slate-900 dark:text-white">0</p>
+      </div>
+      <div class="surface-card p-5">
+        <p class="text-xs uppercase tracking-[0.25em] text-slate-500 dark:text-slate-400">Ingresos</p>
+        <p id="movements-income-total" class="mt-2 text-3xl font-black text-emerald-600">$0</p>
+      </div>
+      <div class="surface-card p-5">
+        <p class="text-xs uppercase tracking-[0.25em] text-slate-500 dark:text-slate-400">Gastos</p>
+        <p id="movements-expense-total" class="mt-2 text-3xl font-black text-rose-600">$0</p>
+      </div>
+      <div class="surface-card p-5">
+        <p class="text-xs uppercase tracking-[0.25em] text-slate-500 dark:text-slate-400">Balance</p>
+        <p id="movements-balance" class="mt-2 text-3xl font-black text-slate-900 dark:text-white">$0</p>
+      </div>
+    </section>
+
+    <section class="surface-card p-4">
+      <div class="flex flex-wrap items-center gap-2">
+        <button data-movement-filter="all" class="surface-chip bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white">Todos</button>
+        <button data-movement-filter="ingreso" class="surface-chip text-slate-500 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">Ingresos</button>
+        <button data-movement-filter="gasto" class="surface-chip text-slate-500 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">Gastos</button>
+      </div>
+    </section>
+
+    <section class="surface-card overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-gray-50 dark:bg-gray-900">
+            <tr>
+              <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">Fecha</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">Tipo</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">Categoría</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">Descripción</th>
+              <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">Monto</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">Estado</th>
+            </tr>
+          </thead>
+          <tbody id="movements-tbody" class="divide-y divide-gray-200 dark:divide-gray-800"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <div id="new-movement-modal" role="dialog" aria-hidden="true" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 opacity-0 pointer-events-none transition-opacity dark:bg-gray-950/80">
+    <div class="surface-card w-full max-w-lg m-4 transform scale-95 transition-transform">
+      <div class="flex items-center justify-between border-b border-slate-200 px-6 py-4 dark:border-slate-700">
+        <h2 class="text-lg font-bold text-slate-900 dark:text-white">Registrar Nuevo Movimiento</h2>
+        <button type="button" data-modal-close class="text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <div class="p-6">
+        <form id="movement-form" class="space-y-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="date">Fecha</label>
+            <input class="surface-input mt-1 block w-full py-2 sm:text-sm" id="date" name="date" type="date" />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Tipo</label>
+            <div class="mt-2 flex gap-4">
+              <label class="flex items-center">
+                <input checked class="form-radio h-4 w-4 border-gray-300 text-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-800" name="type" type="radio" value="ingreso" />
+                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Ingreso</span>
+              </label>
+              <label class="flex items-center">
+                <input class="form-radio h-4 w-4 border-gray-300 text-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-800" name="type" type="radio" value="gasto" />
+                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Gasto</span>
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="category">Categoría</label>
+            <select class="surface-input mt-1 block w-full py-2 sm:text-sm" id="category" name="category">
+              <option>Venta de papa</option><option>Semillas</option><option>Abonos</option><option>Mano de obra</option><option>Combustible</option><option>Arriendo de maquinaria</option><option>Transporte</option><option>Otros</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="description">Descripción</label>
+            <textarea class="surface-input mt-1 block w-full py-2 sm:text-sm" id="description" name="description" placeholder="Ej: Venta de 20 bultos de papa R12" rows="3"></textarea>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="amount">Monto</label>
+            <div class="relative mt-1 rounded-lg shadow-sm">
+              <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3"><span class="text-gray-500 dark:text-gray-400 sm:text-sm">$</span></div>
+              <input class="surface-input block w-full py-2 pl-7 pr-12 sm:text-sm" id="amount" name="amount" placeholder="0.00" type="number" />
+              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3"><span class="text-gray-500 dark:text-gray-400 sm:text-sm" id="currency">COP</span></div>
+            </div>
+          </div>
+
+          <div class="flex justify-end gap-3 pt-2">
+            <p id="movement-form-status" class="mr-auto self-center text-sm text-slate-500 dark:text-slate-400"></p>
+            <button class="flex min-w-[84px] items-center justify-center rounded-lg border border-gray-300 bg-white px-4 h-10 text-sm font-bold leading-normal text-gray-800 transition-colors hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600" type="button" data-modal-close><span class="truncate">Cancelar</span></button>
+            <button id="movement-submit" class="flex min-w-[84px] items-center justify-center rounded-lg bg-primary px-4 h-10 text-sm font-bold leading-normal text-white transition-colors hover:bg-primary/90" type="submit"><span class="truncate">Guardar</span></button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initMovementsPage } from "../scripts/movements-page.js";
+    initMovementsPage();
+  </script>
+</AppLayout>

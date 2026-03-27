@@ -1,0 +1,71 @@
+---
+import "../styles/global.css";
+
+const { title = "Stitch", description = "Stitch contable" } = Astro.props;
+---
+
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="description" content={description} />
+<meta name="color-scheme" content="light dark" />
+<meta id="theme-color-meta" name="theme-color" content="#f6f7f8" />
+<title>{title}</title>
+
+<script is:inline>
+  (() => {
+    const storageKey = "stitch-theme";
+    const root = document.documentElement;
+    const themeMeta = document.getElementById("theme-color-meta");
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+
+    const resolveTheme = () => {
+      try {
+        const storedTheme = localStorage.getItem(storageKey);
+        if (storedTheme === "dark" || storedTheme === "light") return storedTheme;
+      } catch (_) {}
+      return media.matches ? "dark" : "light";
+    };
+
+    const applyTheme = (theme, persist) => {
+      const nextTheme = theme === "dark" ? "dark" : "light";
+      root.classList.toggle("dark", nextTheme === "dark");
+      root.classList.toggle("light", nextTheme !== "dark");
+      root.dataset.theme = nextTheme;
+      if (themeMeta) {
+        themeMeta.setAttribute("content", nextTheme === "dark" ? "#0f172a" : "#f6f7f8");
+      }
+
+      if (persist) {
+        try {
+          localStorage.setItem(storageKey, nextTheme);
+        } catch (_) {}
+      }
+
+      window.dispatchEvent(new CustomEvent("stitch-theme-change", { detail: { theme: nextTheme } }));
+      return nextTheme;
+    };
+
+    window.StitchTheme = {
+      apply: applyTheme,
+      resolve: resolveTheme,
+      storageKey,
+    };
+
+    applyTheme(resolveTheme(), false);
+
+    media.addEventListener?.("change", () => {
+      try {
+        if (localStorage.getItem(storageKey) == null) {
+          applyTheme(media.matches ? "dark" : "light", false);
+        }
+      } catch (_) {
+        applyTheme(media.matches ? "dark" : "light", false);
+      }
+    });
+  })();
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />

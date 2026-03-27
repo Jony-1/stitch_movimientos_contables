@@ -1,390 +1,1282 @@
+// server.js
 "use strict";
 
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
+const fs = require("fs");
 const session = require("express-session");
 const bcrypt = require("bcryptjs");
 const pool = require("./db");
+const {
+  attachCsrfContext,
+  attachSecurityHeaders,
+  ensureAdmin,
+  ensureAdminApi,
+  ensureApiAuth,
+  ensureAuth,
+  ensureGuest,
+  getCsrfToken,
+  requireCsrf,
+} = require("./middleware/security");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const isProduction = process.env.NODE_ENV === "production";
 
+// =======================
 // Middlewares
-app.use(cors());
+// =======================
+attachSecurityHeaders(app, isProduction);
+
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
-app.use(express.urlencoded({ extended: true })); // <-- para POST del login form
+app.use(express.urlencoded({ extended: true })); // para POST del login form
 
-// sesión en memoria (no recomendable para producción)
+// sesión en memoria (ok para dev)
 app.use(
-  session({
-    secret: process.env.SESSION_SECRET || "keyboard cat",
-    resave: false,
-    saveUninitialized: false,
-    cookie: { maxAge: 1000 * 60 * 60 }, // 1h
-  })
-);
+    session({
+      secret: process.env.SESSION_SECRET || "keyboard cat",
+      resave: false,
+      saveUninitialized: false,
+      cookie: { maxAge: 1000 * 60 * 60, sameSite: "lax", httpOnly: true, secure: isProduction }, // 1h
+    })
+  );
 
-// ===== View engine (EJS) =====
-app.set("view engine", "ejs");
-app.set("views", path.join(__dirname, "views"));
+app.use(attachCsrfContext);
+
+app.use(requireCsrf);
 
 // ===== Static files =====
-// IMPORTANTE:
-// - Tú tienes /assets (css)
-// - Tú tienes /js (tu app.js modular) FUERA de assets
-// - Opcional: /public si lo usas
 app.use("/assets", express.static(path.join(__dirname, "assets")));
-app.use("/js", express.static(path.join(__dirname, "js")));
 app.use("/public", express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(__dirname, "dist")));
+
+const distDir = path.join(__dirname, "dist");
+
+function sendAstroPage(res, page) {
+  const pagePath = page === "index"
+    ? path.join(distDir, "index.html")
+    : path.join(distDir, page, "index.html");
+
+  if (fs.existsSync(pagePath)) {
+    return res.sendFile(pagePath);
+  }
+  return null;
+}
+
+function buildSessionUser(user) {
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name || "Usuario",
+    role: String(user.role || "user").toLowerCase(),
+  };
+}
+
+function parseIdParam(value) {
+  const id = parseInt(value, 10);
+  return Number.isNaN(id) ? null : id;
+}
+
+function isNonEmptyString(value) {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function normalizeEmail(email) {
+  return String(email || "").trim().toLowerCase();
+}
+
+function isValidAmount(value) {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+function normalizeInvoiceStatus(status) {
+  const value = String(status || "").trim().toLowerCase();
+  if (value === "pagada" || value === "paid") return "pagada";
+  if (value === "vencida" || value === "vencido" || value === "overdue") return "vencida";
+  return "pending";
+}
+
+const INVOICE_SELECT_FIELDS = `
+  id,
+  number,
+  party,
+  date,
+  duedate AS "dueDate",
+  amount,
+  status,
+  created_at,
+  updated_at
+`;
+
+const INVOICE_ITEM_SELECT_FIELDS = `
+  id,
+  invoice_id AS "invoiceId",
+  description,
+  quantity,
+  unit_price AS "unitPrice",
+  line_total AS "lineTotal",
+  sort_order AS "sortOrder",
+  created_at,
+  updated_at
+`;
+
+const MOVEMENT_TYPES = new Set(["ingreso", "gasto"]);
+
+function normalizeMovementType(type) {
+  return String(type || "").trim().toLowerCase();
+}
+
+function normalizeMovementAmount(type, amount) {
+  return Math.abs(Number(amount || 0));
+}
+
+function isMovementType(type) {
+  return MOVEMENT_TYPES.has(normalizeMovementType(type));
+}
+
+const MOVEMENT_SELECT_FIELDS = `
+  id,
+  date,
+  type,
+  category,
+  description,
+  CASE
+    WHEN lower(type::text) = 'gasto' THEN -ABS(amount)
+    WHEN lower(type::text) = 'ingreso' THEN ABS(amount)
+    ELSE amount
+  END AS amount,
+  status,
+  created_at,
+  updated_at
+`;
+
+function normalizeRole(role) {
+  const value = String(role || "").trim().toLowerCase();
+  if (value === "admin") return "Admin";
+  if (value === "contador") return "Contador";
+  return "Productor";
+}
+
+function isValidEmail(email) {
+  return typeof email === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+}
+
+function toValidMoney(value, fallback = 0) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function normalizeInvoiceItem(item, index) {
+  const description = isNonEmptyString(item?.description)
+    ? item.description.trim()
+    : `Concepto ${index + 1}`;
+  const quantity = Number(item?.quantity);
+  const safeQuantity = Number.isFinite(quantity) && quantity > 0 ? quantity : 1;
+  const unitPrice = Number(item?.unitPrice ?? item?.price ?? item?.amount);
+  const safeUnitPrice = Number.isFinite(unitPrice) && unitPrice >= 0 ? unitPrice : 0;
+  const lineTotal = Number((safeQuantity * safeUnitPrice).toFixed(2));
+
+  return {
+    description,
+    quantity: safeQuantity,
+    unitPrice: safeUnitPrice,
+    lineTotal,
+    sortOrder: index,
+  };
+}
+
+function normalizeInvoiceItems(items, fallbackAmount) {
+  if (Array.isArray(items)) {
+    const normalized = items
+      .map((item, index) => normalizeInvoiceItem(item, index))
+      .filter((item) => item.description || item.quantity > 0 || item.unitPrice > 0 || item.lineTotal > 0);
+
+    return {
+      items: normalized,
+      amount: normalized.reduce((sum, item) => sum + Number(item.lineTotal || 0), 0),
+    };
+  }
+
+  const amount = toValidMoney(fallbackAmount, 0);
+  if (amount <= 0) {
+    return { items: [], amount: 0 };
+  }
+
+  return {
+    items: [
+      {
+        description: "Concepto general",
+        quantity: 1,
+        unitPrice: amount,
+        lineTotal: amount,
+        sortOrder: 0,
+      },
+    ],
+    amount,
+  };
+}
+
+async function attachInvoiceItems(rows, client = pool) {
+  if (!rows.length) return rows;
+
+  try {
+    const ids = rows.map((row) => row.id);
+    const itemsResult = await client.query(
+      `SELECT ${INVOICE_ITEM_SELECT_FIELDS} FROM invoice_items WHERE invoice_id = ANY($1::int[]) ORDER BY invoice_id ASC, sort_order ASC, id ASC`,
+      [ids]
+    );
+
+    const byInvoiceId = new Map();
+    itemsResult.rows.forEach((item) => {
+      if (!byInvoiceId.has(item.invoiceId)) byInvoiceId.set(item.invoiceId, []);
+      byInvoiceId.get(item.invoiceId).push(item);
+    });
+
+    return rows.map((row) => ({
+      ...row,
+      items: byInvoiceId.get(row.id) || [],
+    }));
+  } catch (err) {
+    console.warn("No se pudieron cargar los ítems de factura:", err.message);
+    return rows.map((row) => ({ ...row, items: [] }));
+  }
+}
+
+async function saveInvoiceWithItems(client, payload) {
+  const {
+    id = null,
+    number,
+    party,
+    date,
+    dueDate,
+    status,
+    amount,
+    items,
+  } = payload;
+
+  const normalizedStatus = normalizeInvoiceStatus(status);
+  const normalizedItems = normalizeInvoiceItems(items, amount);
+
+  if (Array.isArray(items) && normalizedItems.items.length === 0) {
+    throw new Error("Agrega al menos un ítem a la factura");
+  }
+
+  const invoiceAmount = normalizedItems.items.length > 0 ? normalizedItems.amount : toValidMoney(amount, 0);
+
+  let invoiceRow = null;
+
+  if (id === null) {
+    const result = await client.query(
+      `INSERT INTO invoices (number, party, date, duedate, amount, status)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING ${INVOICE_SELECT_FIELDS}`,
+      [number.trim(), party.trim(), date || null, dueDate || null, invoiceAmount, normalizedStatus]
+    );
+    invoiceRow = result.rows[0];
+  } else {
+    const result = await client.query(
+      `UPDATE invoices
+         SET number = $1, party = $2, date = $3, duedate = $4, amount = $5, status = $6, updated_at = NOW()
+       WHERE id = $7
+       RETURNING ${INVOICE_SELECT_FIELDS}`,
+      [number.trim(), party.trim(), date || null, dueDate || null, invoiceAmount, normalizedStatus, id]
+    );
+    invoiceRow = result.rows[0] || null;
+  }
+
+  if (!invoiceRow) {
+    return null;
+  }
+
+  if (id !== null) {
+    await client.query("DELETE FROM invoice_items WHERE invoice_id = $1", [id]);
+  }
+
+  if (normalizedItems.items.length > 0) {
+    for (const item of normalizedItems.items) {
+      await client.query(
+        `INSERT INTO invoice_items (invoice_id, description, quantity, unit_price, line_total, sort_order)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [invoiceRow.id, item.description, item.quantity, item.unitPrice, item.lineTotal, item.sortOrder]
+      );
+    }
+  }
+
+  return {
+    ...invoiceRow,
+    items: normalizedItems.items,
+  };
+}
 
 // =======================
 // ROUTES (Vistas)
 // =======================
-
 app.get("/", (req, res) => {
-  res.render("login", { title: "Login", active: "login", error: null });
+  if (req.session && req.session.user) return res.redirect("/dashboard");
+  if (sendAstroPage(res, "index")) return;
+  return res.redirect("/login");
 });
 
-// middleware para rutas privadas
-function ensureAuth(req, res, next) {
-  if (req.session && req.session.user) {
-    return next();
-  }
-  return res.redirect("/");
-}
+app.get("/login", ensureGuest, (req, res) => {
+  if (sendAstroPage(res, "login")) return;
+  return res.status(503).send("Astro build missing");
+});
+
+app.get("/register", ensureGuest, (req, res) => {
+  if (sendAstroPage(res, "register")) return;
+  return res.status(503).send("Astro build missing");
+});
+
+app.get("/api/csrf", (req, res) => {
+  res.setHeader("Cache-Control", "no-store");
+  return res.json({ csrfToken: getCsrfToken(req) });
+});
 
 // Login real contra tabla users
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
-    return res.status(400).render("login", { title: "Login", active: "login", error: "Email y contraseña obligatorios" });
+    return res.redirect("/login?error=" + encodeURIComponent("Email y contraseña obligatorios"));
   }
+
+  const normalizedEmail = normalizeEmail(email);
+
   try {
     const result = await pool.query(
-      "SELECT id, email, password, role, active FROM users WHERE email = $1",
-      [email]
+      "SELECT id, email, name, password, role, active FROM users WHERE LOWER(email) = $1",
+      [normalizedEmail]
     );
+
     if (result.rows.length === 0) {
-      return res.status(401).render("login", { title: "Login", active: "login", error: "Credenciales inválidas" });
+      return res.redirect("/login?error=" + encodeURIComponent("Credenciales inválidas"));
     }
+
     const user = result.rows[0];
+
     if (!user.active) {
-      return res.status(403).render("login", { title: "Login", active: "login", error: "Usuario inactivo" });
+      return res.redirect("/login?error=" + encodeURIComponent("Usuario inactivo"));
     }
+
     if (!user.password) {
-      // usuario sin contraseña en base => denegamos (registro antiguo)
-      return res.status(401).render("login", { title: "Login", active: "login", error: "Credenciales inválidas" });
+      return res.redirect("/login?error=" + encodeURIComponent("Credenciales inválidas"));
     }
+
     const match = await bcrypt.compare(password, user.password);
     if (!match) {
-      return res.status(401).render("login", { title: "Login", active: "login", error: "Credenciales inválidas" });
+      return res.redirect("/login?error=" + encodeURIComponent("Credenciales inválidas"));
     }
-    // guardamos datos basicos en la sesión
-    req.session.user = { id: user.id, email: user.email, role: user.role };
+
+    // Guardar sesión
+    req.session.user = buildSessionUser(user);
+
     return res.redirect("/dashboard");
   } catch (err) {
     console.error("Error POST /login", err);
-    res.status(500).send("Error interno");
+    return res.status(500).send("Error interno");
   }
 });
 
-// ruta de cierre de sesión
+app.post("/api/login", async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ error: "Email y contraseña obligatorios" });
+  }
+
+  const normalizedEmail = normalizeEmail(email);
+
+  try {
+    const result = await pool.query(
+      "SELECT id, email, name, password, role, active FROM users WHERE LOWER(email) = $1",
+      [normalizedEmail]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(401).json({ error: "Credenciales inválidas" });
+    }
+
+    const user = result.rows[0];
+
+    if (!user.active) {
+      return res.status(403).json({ error: "Usuario inactivo" });
+    }
+
+    if (!user.password) {
+      return res.status(401).json({ error: "Credenciales inválidas" });
+    }
+
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) {
+      return res.status(401).json({ error: "Credenciales inválidas" });
+    }
+
+    req.session.user = buildSessionUser(user);
+    return res.json(req.session.user);
+  } catch (err) {
+    console.error("Error POST /api/login", err);
+    return res.status(500).json({ error: "Error interno" });
+  }
+});
+
+app.post("/api/register", async (req, res) => {
+  const { name, email, password } = req.body;
+  if (!isNonEmptyString(name) || !isValidEmail(email) || !isNonEmptyString(password) || String(password).length < 6) {
+    return res.status(400).json({ error: "Nombre, email y contraseña son obligatorios" });
+  }
+
+  const normalizedEmail = normalizeEmail(email);
+
+  try {
+    const existing = await pool.query("SELECT id FROM users WHERE LOWER(email) = $1", [normalizedEmail]);
+    if (existing.rows.length > 0) {
+      return res.status(409).json({ error: "El correo ya está registrado" });
+    }
+
+    const hash = await bcrypt.hash(password, 10);
+    const result = await pool.query(
+      `INSERT INTO users (email, name, password, role, active)
+       VALUES ($1, $2, $3, 'Productor', true)
+       RETURNING id, email, name, role, active, created_at`,
+      [normalizedEmail, name.trim(), hash]
+    );
+
+    req.session.user = buildSessionUser(result.rows[0]);
+
+    return res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error("Error POST /api/register", err);
+    return res.status(500).json({ error: "No se pudo registrar el usuario" });
+  }
+});
+
+// Logout
 app.post("/logout", (req, res) => {
-  req.session.destroy(() => {
-    res.redirect("/");
+  req.session.destroy((err) => {
+    if (err) {
+      console.error("Error POST /logout", err);
+    }
+    res.clearCookie("connect.sid", { path: "/" });
+    return res.redirect("/login");
   });
 });
 
+app.get("/logout", (req, res) => {
+  if (!req.session) {
+    return res.redirect("/login");
+  }
+
+  req.session.destroy((err) => {
+    if (err) {
+      console.error("Error GET /logout", err);
+    }
+    res.clearCookie("connect.sid", { path: "/" });
+    return res.redirect("/login");
+  });
+});
+
+app.post("/api/logout", (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      console.error("Error POST /api/logout", err);
+      return res.status(500).json({ error: "No se pudo cerrar sesión" });
+    }
+    res.clearCookie("connect.sid", { path: "/" });
+    return res.status(204).send();
+  });
+});
+
+// Vistas protegidas
 app.get("/dashboard", ensureAuth, (req, res) => {
+  if (sendAstroPage(res, "dashboard")) return;
   res.render("dashboard", { title: "Dashboard", active: "dashboard" });
 });
-
 app.get("/movimientos", ensureAuth, (req, res) => {
+  if (sendAstroPage(res, "movimientos")) return;
   res.render("movimientos", { title: "Movimientos", active: "movimientos" });
 });
-
 app.get("/facturas", ensureAuth, (req, res) => {
+  if (sendAstroPage(res, "facturas")) return;
   res.render("facturas", { title: "Facturas", active: "facturas" });
 });
-
 app.get("/reportes", ensureAuth, (req, res) => {
+  if (sendAstroPage(res, "reportes")) return;
   res.render("reportes", { title: "Reportes", active: "reportes" });
 });
-
-app.get("/configuraciones", ensureAuth, (req, res) => {
-  res.render("configuraciones", { title: "Configuración", active: "config" });
+app.get("/configuraciones", ensureAdmin, (req, res) => {
+  if (sendAstroPage(res, "configuraciones")) return;
+  res.render("configuraciones", { title: "Configuración", active: "configuraciones" });
 });
-
-app.get("/usuarios", ensureAuth, (req, res) => {
+app.get("/usuarios", ensureAdmin, (req, res) => {
+  if (sendAstroPage(res, "usuarios")) return;
   res.render("usuarios", { title: "Usuarios", active: "usuarios" });
 });
 
 // =======================
-// API USERS (login / CRUD)
+// API - Auth / Users
 // =======================
-
-// helpers: only admin may create/update/delete others
-function checkAdmin(req, res) {
-  if (!req.session.user || req.session.user.role !== "admin") {
-    res.status(403).json({ error: "Permiso denegado" });
-    return false;
-  }
-  return true;
-}
-
-// información del usuario autenticado
 app.get("/api/me", (req, res) => {
-  if (req.session && req.session.user) {
-    return res.json(req.session.user);
+  res.setHeader("Cache-Control", "no-store");
+  if (!req.session || !req.session.user) {
+    return res.status(401).json({ error: "no autenticado" });
   }
-  res.status(401).json({ error: "no autenticado" });
+  return res.json({ authenticated: true, user: req.session.user });
 });
 
-app.get("/api/users", ensureAuth, async (req, res) => {
+app.get("/api/users", ensureAdminApi, async (req, res) => {
   try {
     const result = await pool.query(
-      "SELECT id, email, role, active, created_at FROM users ORDER BY id"
+      "SELECT id, email, name, role, active, created_at FROM users ORDER BY id"
     );
-    res.json(result.rows);
+    return res.json(result.rows);
   } catch (err) {
     console.error("Error GET /api/users", err);
-    res.status(500).json({ error: "Error al obtener usuarios" });
+    return res.status(500).json({ error: "Error al obtener usuarios" });
   }
 });
 
-app.post("/api/users", ensureAuth, async (req, res) => {
-  if (!checkAdmin(req, res)) return;
-  const { email, password, role, active } = req.body;
-  if (!email || !password) {
+app.post("/api/users", ensureAdminApi, async (req, res) => {
+  const { email, password, role, active, name } = req.body;
+  if (!isNonEmptyString(email) || !isNonEmptyString(password)) {
     return res.status(400).json({ error: "Email y contraseña obligatorios" });
   }
+
   try {
     const hash = await bcrypt.hash(password, 10);
+    const r = normalizeRole(role);
+
     const result = await pool.query(
-      `INSERT INTO users (email, password, role, active)
-       VALUES ($1, $2, $3, $4)
-       RETURNING id, email, role, active, created_at`,
-      [email, hash, role || "user", active !== false]
+      `INSERT INTO users (email, password, role, active, name)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING id, email, name, role, active, created_at`,
+      [normalizeEmail(email), hash, r, active !== false, isNonEmptyString(name) ? name.trim() : ""]
     );
-    res.status(201).json(result.rows[0]);
+
+    return res.status(201).json(result.rows[0]);
   } catch (err) {
     console.error("Error POST /api/users", err);
-    res.status(500).json({ error: "Error al crear usuario" });
+    return res.status(500).json({ error: "Error al crear usuario" });
   }
 });
 
-app.put("/api/users/:id", ensureAuth, async (req, res) => {
-  const uid = parseInt(req.params.id, 10);
-  if (req.session.user.role !== "admin" && req.session.user.id !== uid) {
-    return res.status(403).json({ error: "Permiso denegado" });
+app.put("/api/users/:id", ensureAdminApi, async (req, res) => {
+  const uid = parseIdParam(req.params.id);
+  if (uid === null) {
+    return res.status(400).json({ error: "ID de usuario inválido" });
   }
-  const { email, password, role, active } = req.body;
+  const myRole = String(req.session.user.role || "").toLowerCase();
+
+  const { email, password, role, active, name } = req.body;
+
   try {
     const fields = [];
     const values = [];
     let idx = 1;
+
     if (email) {
       fields.push(`email = $${idx++}`);
-      values.push(email);
+      values.push(normalizeEmail(email));
+    }
+    if (typeof name !== "undefined") {
+      fields.push(`name = $${idx++}`);
+      values.push(isNonEmptyString(name) ? name.trim() : "");
     }
     if (password) {
       const hash = await bcrypt.hash(password, 10);
       fields.push(`password = $${idx++}`);
       values.push(hash);
     }
-    if (role) {
+    if (role && myRole === "admin") {
       fields.push(`role = $${idx++}`);
-      values.push(role);
+      values.push(normalizeRole(role));
     }
-    if (typeof active !== "undefined") {
+    if (typeof active !== "undefined" && myRole === "admin") {
       fields.push(`active = $${idx++}`);
       values.push(active);
     }
+
     if (fields.length === 0) {
       return res.status(400).json({ error: "No hay cambios" });
     }
+
     values.push(uid);
-    const query = `UPDATE users SET ${fields.join(", ")} WHERE id = $${idx} RETURNING id, email, role, active, created_at`;
+    const query = `UPDATE users SET ${fields.join(", ")} WHERE id = $${idx} RETURNING id, email, name, role, active, created_at`;
     const result = await pool.query(query, values);
+
     if (result.rows.length === 0) {
       return res.status(404).json({ error: "Usuario no encontrado" });
     }
-    res.json(result.rows[0]);
+
+    const updatedUser = result.rows[0];
+    const currentUserId = req.session?.user?.id;
+    if (currentUserId === updatedUser.id) {
+      if (!updatedUser.active) {
+        return req.session.destroy((err) => {
+          if (err) {
+            console.error("Error destroying session after user deactivation", err);
+          }
+          res.clearCookie("connect.sid", { path: "/" });
+          return res.json(updatedUser);
+        });
+      }
+
+      req.session.user = buildSessionUser(updatedUser);
+    }
+
+    return res.json(updatedUser);
   } catch (err) {
     console.error("Error PUT /api/users/:id", err);
-    res.status(500).json({ error: "Error al actualizar usuario" });
+    return res.status(500).json({ error: "Error al actualizar usuario" });
   }
 });
 
-app.delete("/api/users/:id", ensureAuth, async (req, res) => {
-  const uid = parseInt(req.params.id, 10);
-  if (req.session.user.role !== "admin" && req.session.user.id !== uid) {
+app.delete("/api/users/:id", ensureAdminApi, async (req, res) => {
+  const uid = parseIdParam(req.params.id);
+  if (uid === null) {
+    return res.status(400).json({ error: "ID de usuario inválido" });
+  }
+  const myRole = String(req.session.user.role || "").toLowerCase();
+
+  if (myRole !== "admin" && req.session.user.id !== uid) {
     return res.status(403).json({ error: "Permiso denegado" });
   }
+
   try {
     const result = await pool.query("DELETE FROM users WHERE id = $1", [uid]);
-    if (result.rowCount === 0) {
-      return res.status(404).json({ error: "Usuario no encontrado" });
+    if (result.rowCount === 0) return res.status(404).json({ error: "Usuario no encontrado" });
+
+    if (req.session?.user?.id === uid) {
+      return req.session.destroy((err) => {
+        if (err) {
+          console.error("Error destroying session after self-delete", err);
+        }
+        res.clearCookie("connect.sid", { path: "/" });
+        return res.status(204).send();
+      });
     }
-    res.status(204).send();
+
+    return res.status(204).send();
   } catch (err) {
     console.error("Error DELETE /api/users/:id", err);
-    res.status(500).json({ error: "Error al eliminar usuario" });
+    return res.status(500).json({ error: "Error al eliminar usuario" });
   }
 });
 
 // =======================
-// API MOVEMENTS
+// API MOVEMENTS (CRUD)
 // =======================
-app.get("/api/movements", async (req, res) => {
+// Nota: ahora las protegemos con ensureAuth para que no exponga datos sin login
+app.get("/api/movements", ensureAuth, async (req, res) => {
   try {
     const result = await pool.query(
-      "SELECT id, date, type, category, description, amount, status FROM movements ORDER BY id DESC"
+      `SELECT ${MOVEMENT_SELECT_FIELDS} FROM movements ORDER BY date DESC NULLS LAST, id DESC`
     );
-    res.json(result.rows);
+    return res.json(result.rows);
   } catch (err) {
     console.error("Error GET /api/movements", err);
-    res.status(500).json({ error: "Error al obtener movimientos" });
+    return res.status(500).json({ error: "Error al obtener movimientos" });
   }
 });
 
-app.post("/api/movements", async (req, res) => {
+app.get("/api/movements/summary", ensureAuth, async (req, res) => {
+  try {
+    const totalsResult = await pool.query(`
+      SELECT
+        COUNT(*)::int AS total_count,
+        COALESCE(SUM(CASE WHEN lower(type::text) = 'ingreso' THEN ABS(amount) ELSE 0 END), 0) AS income_total,
+        COALESCE(SUM(CASE WHEN lower(type::text) = 'gasto' THEN ABS(amount) ELSE 0 END), 0) AS expense_total
+      FROM movements
+    `);
+
+    const recentResult = await pool.query(`
+      SELECT ${MOVEMENT_SELECT_FIELDS}
+      FROM movements
+      ORDER BY date DESC NULLS LAST, id DESC
+      LIMIT 5
+    `);
+
+    const totals = totalsResult.rows[0] || { total_count: 0, income_total: 0, expense_total: 0 };
+    const incomeTotal = Number(totals.income_total || 0);
+    const expenseTotal = Number(totals.expense_total || 0);
+
+    return res.json({
+      totalCount: Number(totals.total_count || 0),
+      incomeTotal,
+      expenseTotal,
+      balance: incomeTotal - expenseTotal,
+      recentMovements: recentResult.rows,
+    });
+  } catch (err) {
+    console.error("Error GET /api/movements/summary", err);
+    return res.status(500).json({ error: "Error al obtener resumen de movimientos" });
+  }
+});
+
+function buildMovementReportFilters(query = {}) {
+  const where = [];
+  const params = [];
+  const from = String(query.from || "").trim();
+  const to = String(query.to || "").trim();
+  const type = String(query.type || "all").trim().toLowerCase();
+  const normalizedType = ["ingreso", "gasto"].includes(type) ? type : "all";
+  const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+
+  if (from && !datePattern.test(from)) return { error: "El filtro 'from' no es válido" };
+  if (to && !datePattern.test(to)) return { error: "El filtro 'to' no es válido" };
+
+  if (from) {
+    params.push(from);
+    where.push(`date::date >= $${params.length}::date`);
+  }
+
+  if (to) {
+    params.push(to);
+    where.push(`date::date <= $${params.length}::date`);
+  }
+
+  if (normalizedType !== "all") {
+    params.push(normalizedType);
+    where.push(`lower(type::text) = $${params.length}`);
+  }
+
+  return {
+    whereSql: where.length ? `WHERE ${where.join(" AND ")}` : "",
+    params,
+    filters: {
+      from: from || null,
+      to: to || null,
+      type: normalizedType,
+    },
+  };
+}
+
+function getReportDateExpr(tableAlias = "date") {
+  return `COALESCE(${tableAlias}, created_at)::date`;
+}
+
+async function buildInvoiceReport(whereSql, params) {
+  const dateExpr = getReportDateExpr("date");
+
+  const totalsResult = await pool.query(
+    `SELECT
+      COUNT(*)::int AS total_count,
+      COALESCE(SUM(amount), 0) AS total_amount,
+      COUNT(*) FILTER (WHERE lower(status::text) = 'pagada')::int AS paid_count,
+      COUNT(*) FILTER (WHERE lower(status::text) = 'pending')::int AS pending_count,
+      COUNT(*) FILTER (WHERE lower(status::text) = 'vencida')::int AS overdue_count,
+      COALESCE(SUM(CASE WHEN lower(status::text) = 'pending' THEN amount ELSE 0 END), 0) AS pending_amount
+    FROM invoices
+    ${whereSql}`,
+    params
+  );
+
+  const statusResult = await pool.query(
+    `SELECT
+      COALESCE(NULLIF(TRIM(status), ''), 'pending') AS status,
+      COUNT(*)::int AS count,
+      COALESCE(SUM(amount), 0) AS total
+    FROM invoices
+    ${whereSql}
+    GROUP BY 1
+    ORDER BY total DESC, status ASC`,
+    params
+  );
+
+  const monthResult = await pool.query(
+    `SELECT
+      TO_CHAR(${dateExpr}, 'YYYY-MM') AS month,
+      DATE_TRUNC('month', ${dateExpr})::date AS month_start,
+      COUNT(*)::int AS count,
+      COALESCE(SUM(amount), 0) AS total_amount,
+      COALESCE(SUM(CASE WHEN lower(status::text) = 'pagada' THEN amount ELSE 0 END), 0) AS paid_amount,
+      COALESCE(SUM(CASE WHEN lower(status::text) = 'pending' THEN amount ELSE 0 END), 0) AS pending_amount
+    FROM invoices
+    ${whereSql}
+    GROUP BY 1, 2
+    ORDER BY month_start ASC`,
+    params
+  );
+
+  const partyResult = await pool.query(
+    `SELECT
+      COALESCE(NULLIF(TRIM(party), ''), 'Sin contraparte') AS party,
+      COUNT(*)::int AS count,
+      COALESCE(SUM(amount), 0) AS total
+    FROM invoices
+    ${whereSql}
+    GROUP BY 1
+    ORDER BY total DESC, party ASC
+    LIMIT 6`,
+    params
+  );
+
+  const invoicesResult = await pool.query(
+    `SELECT ${INVOICE_SELECT_FIELDS}
+    FROM invoices
+    ${whereSql}
+    ORDER BY date DESC NULLS LAST, id DESC`,
+    params
+  );
+
+  const totals = totalsResult.rows[0] || { total_count: 0, total_amount: 0, paid_count: 0, pending_count: 0, overdue_count: 0, pending_amount: 0 };
+  const totalAmount = Number(totals.total_amount || 0);
+
+  return {
+    totalCount: Number(totals.total_count || 0),
+    totalAmount,
+    paidCount: Number(totals.paid_count || 0),
+    pendingCount: Number(totals.pending_count || 0),
+    overdueCount: Number(totals.overdue_count || 0),
+    pendingAmount: Number(totals.pending_amount || 0),
+    byStatus: statusResult.rows.map((row) => ({
+      status: row.status,
+      count: Number(row.count || 0),
+      total: Number(row.total || 0),
+    })),
+    byMonth: monthResult.rows.map((row) => ({
+      month: row.month,
+      count: Number(row.count || 0),
+      totalAmount: Number(row.total_amount || 0),
+      paidAmount: Number(row.paid_amount || 0),
+      pendingAmount: Number(row.pending_amount || 0),
+    })),
+    byParty: partyResult.rows.map((row) => ({
+      party: row.party,
+      count: Number(row.count || 0),
+      total: Number(row.total || 0),
+    })),
+    invoices: invoicesResult.rows,
+  };
+}
+
+app.get("/api/reports/movements", ensureAuth, async (req, res) => {
+  try {
+    const filterResult = buildMovementReportFilters(req.query);
+    if (filterResult.error) {
+      return res.status(400).json({ error: filterResult.error });
+    }
+
+    const { whereSql, params, filters } = filterResult;
+
+    const totalsResult = await pool.query(
+      `SELECT
+        COUNT(*)::int AS total_count,
+        COALESCE(SUM(CASE WHEN lower(type::text) = 'ingreso' THEN ABS(amount) ELSE 0 END), 0) AS income_total,
+        COALESCE(SUM(CASE WHEN lower(type::text) = 'gasto' THEN ABS(amount) ELSE 0 END), 0) AS expense_total
+      FROM movements
+      ${whereSql}`,
+      params
+    );
+
+    const movementsResult = await pool.query(
+      `SELECT id, type, date, category, description, amount, status
+      FROM movements
+      ${whereSql}
+      ORDER BY date DESC NULLS LAST, id DESC`,
+      params
+    );
+
+    const categoryResult = await pool.query(
+      `SELECT
+        COALESCE(NULLIF(TRIM(category), ''), 'Sin categoría') AS category,
+        lower(type::text) AS type,
+        COUNT(*)::int AS count,
+        COALESCE(SUM(ABS(amount)), 0) AS total
+      FROM movements
+      ${whereSql}
+      GROUP BY 1, 2
+      ORDER BY total DESC, category ASC`,
+      params
+    );
+
+    const monthResult = await pool.query(
+      `SELECT
+        TO_CHAR(date::date, 'YYYY-MM') AS month,
+        DATE_TRUNC('month', date)::date AS month_start,
+        COUNT(*)::int AS count,
+        COALESCE(SUM(CASE WHEN lower(type::text) = 'ingreso' THEN ABS(amount) ELSE 0 END), 0) AS income_total,
+        COALESCE(SUM(CASE WHEN lower(type::text) = 'gasto' THEN ABS(amount) ELSE 0 END), 0) AS expense_total
+      FROM movements
+      ${whereSql}
+      GROUP BY 1, 2
+      ORDER BY month_start ASC`,
+      params
+    );
+
+    const totals = totalsResult.rows[0] || { total_count: 0, income_total: 0, expense_total: 0 };
+    const incomeTotal = Number(totals.income_total || 0);
+    const expenseTotal = Number(totals.expense_total || 0);
+
+    return res.json({
+      filters,
+      totalCount: Number(totals.total_count || 0),
+      incomeTotal,
+      expenseTotal,
+      balance: incomeTotal - expenseTotal,
+      movements: movementsResult.rows,
+      byCategory: categoryResult.rows.map((row) => ({
+        category: row.category,
+        type: row.type,
+        count: Number(row.count || 0),
+        total: Number(row.total || 0),
+      })),
+      byMonth: monthResult.rows.map((row) => {
+        const income = Number(row.income_total || 0);
+        const expense = Number(row.expense_total || 0);
+        return {
+          month: row.month,
+          count: Number(row.count || 0),
+          incomeTotal: income,
+          expenseTotal: expense,
+          balance: income - expense,
+        };
+      }),
+    });
+  } catch (err) {
+    console.error("Error GET /api/reports/movements", err);
+    return res.status(500).json({ error: "Error al obtener reportes de movimientos" });
+  }
+});
+
+app.get("/api/reports/overview", ensureAuth, async (req, res) => {
+  try {
+    const filterResult = buildMovementReportFilters(req.query);
+    if (filterResult.error) {
+      return res.status(400).json({ error: filterResult.error });
+    }
+
+    const { whereSql, params, filters } = filterResult;
+    const movementReport = await (async () => {
+      const totalsResult = await pool.query(
+        `SELECT
+          COUNT(*)::int AS total_count,
+          COALESCE(SUM(CASE WHEN lower(type::text) = 'ingreso' THEN ABS(amount) ELSE 0 END), 0) AS income_total,
+          COALESCE(SUM(CASE WHEN lower(type::text) = 'gasto' THEN ABS(amount) ELSE 0 END), 0) AS expense_total
+        FROM movements
+        ${whereSql}`,
+        params
+      );
+
+      const movementsResult = await pool.query(
+        `SELECT id, type, date, category, description, amount, status
+        FROM movements
+        ${whereSql}
+        ORDER BY date DESC NULLS LAST, id DESC`,
+        params
+      );
+
+      const categoryResult = await pool.query(
+        `SELECT
+          COALESCE(NULLIF(TRIM(category), ''), 'Sin categoría') AS category,
+          lower(type::text) AS type,
+          COUNT(*)::int AS count,
+          COALESCE(SUM(ABS(amount)), 0) AS total
+        FROM movements
+        ${whereSql}
+        GROUP BY 1, 2
+        ORDER BY total DESC, category ASC`,
+        params
+      );
+
+      const monthResult = await pool.query(
+        `SELECT
+          TO_CHAR(date::date, 'YYYY-MM') AS month,
+          DATE_TRUNC('month', date)::date AS month_start,
+          COUNT(*)::int AS count,
+          COALESCE(SUM(CASE WHEN lower(type::text) = 'ingreso' THEN ABS(amount) ELSE 0 END), 0) AS income_total,
+          COALESCE(SUM(CASE WHEN lower(type::text) = 'gasto' THEN ABS(amount) ELSE 0 END), 0) AS expense_total
+        FROM movements
+        ${whereSql}
+        GROUP BY 1, 2
+        ORDER BY month_start ASC`,
+        params
+      );
+
+      const totals = totalsResult.rows[0] || { total_count: 0, income_total: 0, expense_total: 0 };
+      const incomeTotal = Number(totals.income_total || 0);
+      const expenseTotal = Number(totals.expense_total || 0);
+
+      return {
+        totalCount: Number(totals.total_count || 0),
+        incomeTotal,
+        expenseTotal,
+        balance: incomeTotal - expenseTotal,
+        movements: movementsResult.rows,
+        byCategory: categoryResult.rows.map((row) => ({
+          category: row.category,
+          type: row.type,
+          count: Number(row.count || 0),
+          total: Number(row.total || 0),
+        })),
+        byMonth: monthResult.rows.map((row) => {
+          const income = Number(row.income_total || 0);
+          const expense = Number(row.expense_total || 0);
+          return {
+            month: row.month,
+            count: Number(row.count || 0),
+            incomeTotal: income,
+            expenseTotal: expense,
+            balance: income - expense,
+          };
+        }),
+      };
+    })();
+
+    const invoiceReport = await buildInvoiceReport(whereSql, params);
+
+    return res.json({
+      filters,
+      summary: {
+        movementCount: movementReport.totalCount,
+        invoiceCount: invoiceReport.totalCount,
+        incomeTotal: movementReport.incomeTotal,
+        expenseTotal: movementReport.expenseTotal,
+        movementBalance: movementReport.balance,
+        invoiceTotal: invoiceReport.totalAmount,
+        invoicePendingAmount: invoiceReport.pendingAmount,
+        invoicePendingCount: invoiceReport.pendingCount,
+        invoiceOverdueCount: invoiceReport.overdueCount,
+        netBalance: movementReport.balance,
+      },
+      movements: movementReport,
+      invoices: invoiceReport,
+    });
+  } catch (err) {
+    console.error("Error GET /api/reports/overview", err);
+    return res.status(500).json({ error: "Error al obtener resumen general de reportes" });
+  }
+});
+
+// ✅ NECESARIO PARA EDITAR: GET por ID
+app.get("/api/movements/:id", ensureAuth, async (req, res) => {
+  try {
+    const id = parseIdParam(req.params.id);
+    if (id === null) {
+      return res.status(400).json({ error: "ID de movimiento inválido" });
+    }
+    const result = await pool.query(
+      `SELECT ${MOVEMENT_SELECT_FIELDS} FROM movements WHERE id = $1`,
+      [id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Movimiento no encontrado" });
+    }
+    return res.json(result.rows[0]);
+  } catch (err) {
+    console.error("Error GET /api/movements/:id", err);
+    return res.status(500).json({ error: "Error al obtener movimiento" });
+  }
+});
+
+app.post("/api/movements", ensureAuth, async (req, res) => {
   try {
     const { date, type, category, description, amount, status } = req.body;
+    const normalizedType = normalizeMovementType(type);
+    if (!isValidAmount(Number(amount)) || !isMovementType(normalizedType)) {
+      return res.status(400).json({ error: "Tipo y monto son obligatorios" });
+    }
 
     const result = await pool.query(
       `INSERT INTO movements (date, type, category, description, amount, status)
        VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING id, date, type, category, description, amount, status`,
-      [date, type, category, description, amount, status || "Registrado"]
+      [date || null, normalizedType, category || null, description || null, normalizeMovementAmount(normalizedType, amount), status || "Registrado"]
     );
 
-    res.status(201).json(result.rows[0]);
+    return res.status(201).json(result.rows[0]);
   } catch (err) {
     console.error("Error POST /api/movements", err);
-    res.status(500).json({ error: "Error al crear movimiento" });
+    return res.status(500).json({ error: "Error al crear movimiento" });
   }
 });
 
-app.put("/api/movements/:id", async (req, res) => {
+app.put("/api/movements/:id", ensureAuth, async (req, res) => {
   try {
-    const id = parseInt(req.params.id, 10);
+    const id = parseIdParam(req.params.id);
+    if (id === null) {
+      return res.status(400).json({ error: "ID de movimiento inválido" });
+    }
     const { date, type, category, description, amount, status } = req.body;
+    const normalizedType = normalizeMovementType(type);
+    if (!isValidAmount(Number(amount)) || !isMovementType(normalizedType)) {
+      return res.status(400).json({ error: "Tipo y monto son obligatorios" });
+    }
 
     const result = await pool.query(
       `UPDATE movements
-       SET date = $1, type = $2, category = $3, description = $4, amount = $5, status = $6
+       SET date = $1, type = $2, category = $3, description = $4, amount = $5, status = $6, updated_at = NOW()
        WHERE id = $7
-       RETURNING id, date, type, category, description, amount, status`,
-      [date, type, category, description, amount, status, id]
+       RETURNING id, date, type, category, description, amount, status, created_at, updated_at`,
+      [date || null, normalizedType, category || null, description || null, normalizeMovementAmount(normalizedType, amount), status || "Registrado", id]
     );
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: "Movimiento no encontrado" });
     }
 
-    res.json(result.rows[0]);
+    return res.json(result.rows[0]);
   } catch (err) {
     console.error("Error PUT /api/movements/:id", err);
-    res.status(500).json({ error: "Error al actualizar movimiento" });
+    return res.status(500).json({ error: "Error al actualizar movimiento" });
   }
 });
 
-app.delete("/api/movements/:id", async (req, res) => {
+app.delete("/api/movements/:id", ensureAuth, async (req, res) => {
   try {
-    const id = parseInt(req.params.id, 10);
-
+    const id = parseIdParam(req.params.id);
+    if (id === null) {
+      return res.status(400).json({ error: "ID de movimiento inválido" });
+    }
     const result = await pool.query("DELETE FROM movements WHERE id = $1", [id]);
 
     if (result.rowCount === 0) {
       return res.status(404).json({ error: "Movimiento no encontrado" });
     }
 
-    res.status(204).send();
+    return res.status(204).send();
   } catch (err) {
     console.error("Error DELETE /api/movements/:id", err);
-    res.status(500).json({ error: "Error al eliminar movimiento" });
+    return res.status(500).json({ error: "Error al eliminar movimiento" });
   }
 });
 
 // =======================
-// API INVOICES (si ya las tienes)
+// API INVOICES (CRUD)
 // =======================
-app.get("/api/invoices", async (req, res) => {
+app.get("/api/invoices", ensureAuth, async (req, res) => {
   try {
     const result = await pool.query(
-      "SELECT id, number, party, date, amount, status FROM invoices ORDER BY id DESC"
+      `SELECT ${INVOICE_SELECT_FIELDS} FROM invoices ORDER BY id DESC`
     );
-    res.json(result.rows);
+    const rows = await attachInvoiceItems(result.rows);
+    return res.json(rows);
   } catch (err) {
     console.error("Error GET /api/invoices", err);
-    res.status(500).json({ error: "Error al obtener facturas" });
+    return res.status(500).json({ error: "Error al obtener facturas" });
   }
 });
 
-app.post("/api/invoices", async (req, res) => {
+// ✅ NECESARIO PARA EDITAR: GET por ID
+app.get("/api/invoices/:id", ensureAuth, async (req, res) => {
   try {
-    const { number, party, date, amount, status } = req.body;
-
+    const id = parseIdParam(req.params.id);
+    if (id === null) {
+      return res.status(400).json({ error: "ID de factura inválido" });
+    }
     const result = await pool.query(
-      `INSERT INTO invoices (number, party, date, amount, status)
-       VALUES ($1, $2, $3, $4, $5)
-       RETURNING id, number, party, date, amount, status`,
-      [number, party, date, amount, status]
+      `SELECT ${INVOICE_SELECT_FIELDS} FROM invoices WHERE id = $1`,
+      [id]
     );
-
-    res.status(201).json(result.rows[0]);
-  } catch (err) {
-    console.error("Error POST /api/invoices", err);
-    res.status(500).json({ error: "Error al crear factura" });
-  }
-});
-
-app.put("/api/invoices/:id", async (req, res) => {
-  try {
-    const id = parseInt(req.params.id, 10);
-    const { number, party, date, amount, status } = req.body;
-
-    const result = await pool.query(
-      `UPDATE invoices
-       SET number = $1, party = $2, date = $3, amount = $4, status = $5
-       WHERE id = $6
-       RETURNING id, number, party, date, amount, status`,
-      [number, party, date, amount, status, id]
-    );
-
     if (result.rows.length === 0) {
       return res.status(404).json({ error: "Factura no encontrada" });
     }
-
-    res.json(result.rows[0]);
+    const [invoice] = await attachInvoiceItems(result.rows);
+    return res.json(invoice);
   } catch (err) {
-    console.error("Error PUT /api/invoices/:id", err);
-    res.status(500).json({ error: "Error al actualizar factura" });
+    console.error("Error GET /api/invoices/:id", err);
+    return res.status(500).json({ error: "Error al obtener factura" });
   }
 });
 
-app.delete("/api/invoices/:id", async (req, res) => {
+app.post("/api/invoices", ensureAuth, async (req, res) => {
   try {
-    const id = parseInt(req.params.id, 10);
+    const { number, party, date, dueDate, amount, status, items } = req.body;
+    if (!isNonEmptyString(number) || !isNonEmptyString(party) || !isValidAmount(Number(amount))) {
+      return res.status(400).json({ error: "Número, contraparte y monto son obligatorios" });
+    }
 
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      const result = await saveInvoiceWithItems(client, {
+        number,
+        party,
+        date,
+        dueDate,
+        amount,
+        status,
+        items,
+      });
+      await client.query("COMMIT");
+      return res.status(201).json(result);
+    } catch (saveErr) {
+      await client.query("ROLLBACK");
+      throw saveErr;
+    } finally {
+      client.release();
+    }
+  } catch (err) {
+    console.error("Error POST /api/invoices", err);
+    return res.status(500).json({ error: err.message || "Error al crear factura" });
+  }
+});
+
+app.put("/api/invoices/:id", ensureAuth, async (req, res) => {
+  try {
+    const id = parseIdParam(req.params.id);
+    if (id === null) {
+      return res.status(400).json({ error: "ID de factura inválido" });
+    }
+    const { number, party, date, dueDate, amount, status, items } = req.body;
+    if (!isNonEmptyString(number) || !isNonEmptyString(party) || !isValidAmount(Number(amount))) {
+      return res.status(400).json({ error: "Número, contraparte y monto son obligatorios" });
+    }
+
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      const result = await saveInvoiceWithItems(client, {
+        id,
+        number,
+        party,
+        date,
+        dueDate,
+        amount,
+        status,
+        items,
+      });
+
+      if (!result) {
+        await client.query("ROLLBACK");
+        return res.status(404).json({ error: "Factura no encontrada" });
+      }
+
+      await client.query("COMMIT");
+      return res.json(result);
+    } catch (saveErr) {
+      await client.query("ROLLBACK");
+      throw saveErr;
+    } finally {
+      client.release();
+    }
+  } catch (err) {
+    console.error("Error PUT /api/invoices/:id", err);
+    return res.status(500).json({ error: err.message || "Error al actualizar factura" });
+  }
+});
+
+app.delete("/api/invoices/:id", ensureAuth, async (req, res) => {
+  try {
+    const id = parseIdParam(req.params.id);
+    if (id === null) {
+      return res.status(400).json({ error: "ID de factura inválido" });
+    }
     const result = await pool.query("DELETE FROM invoices WHERE id = $1", [id]);
 
     if (result.rowCount === 0) {
       return res.status(404).json({ error: "Factura no encontrada" });
     }
 
-    res.status(204).send();
+    return res.status(204).send();
   } catch (err) {
     console.error("Error DELETE /api/invoices/:id", err);
-    res.status(500).json({ error: "Error al eliminar factura" });
+    return res.status(500).json({ error: "Error al eliminar factura" });
   }
 });
 
 // =======================
-// Fallback (opcional)
+// Fallback
 // =======================
 app.get("*", (req, res) => {
   const looksLikeFile = path.extname(req.path) !== "";
@@ -392,40 +1284,101 @@ app.get("*", (req, res) => {
   return res.redirect("/");
 });
 
-// inicialización de base de datos (usuarios y admin por defecto)
+// =======================
+// DB init / migrations
+// =======================
 async function initDb() {
   try {
-    // aseguramos tabla y columnas necesarias
+    // users
     await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
         email TEXT UNIQUE NOT NULL,
         name TEXT NOT NULL DEFAULT '',
-        role TEXT NOT NULL DEFAULT 'user',
+        password TEXT,
+        role TEXT NOT NULL DEFAULT 'Productor',
         active BOOLEAN NOT NULL DEFAULT true,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
       )
     `);
 
-    // columnas opcionales que pueden faltar en esquemas anteriores
+    // invoices
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS invoices (
+        id SERIAL PRIMARY KEY,
+        number TEXT NOT NULL,
+        party TEXT NOT NULL,
+        date TIMESTAMP WITH TIME ZONE,
+        dueDate TIMESTAMP WITH TIME ZONE,
+        amount NUMERIC(15, 2) NOT NULL,
+        status TEXT NOT NULL DEFAULT 'pending',
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS invoice_items (
+        id SERIAL PRIMARY KEY,
+        invoice_id INTEGER NOT NULL REFERENCES invoices(id) ON DELETE CASCADE,
+        description TEXT NOT NULL,
+        quantity NUMERIC(15, 2) NOT NULL DEFAULT 1,
+        unit_price NUMERIC(15, 2) NOT NULL DEFAULT 0,
+        line_total NUMERIC(15, 2) NOT NULL DEFAULT 0,
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+      )
+    `);
+
+    // movements (✅ incluye status)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS movements (
+        id SERIAL PRIMARY KEY,
+        type TEXT NOT NULL,
+        date TIMESTAMP WITH TIME ZONE,
+        amount NUMERIC(15, 2) NOT NULL,
+        description TEXT,
+        category TEXT,
+        status TEXT NOT NULL DEFAULT 'Registrado',
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+      )
+    `);
+
+    // Asegurar columnas por si ya existían tablas viejas
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS name TEXT NOT NULL DEFAULT ''`);
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS password TEXT`);
-    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT NOT NULL DEFAULT 'user'`);
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT NOT NULL DEFAULT 'Productor'`);
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS active BOOLEAN NOT NULL DEFAULT true`);
 
+    await pool.query(`ALTER TABLE movements ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'Registrado'`);
+    await pool.query(`ALTER TABLE movements ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()`);
+    await pool.query(`UPDATE movements SET amount = ABS(amount)`);
+    await pool.query(`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS duedate TIMESTAMP WITH TIME ZONE`);
+    await pool.query(`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()`);
+    await pool.query(`UPDATE invoices SET status = CASE WHEN lower(trim(COALESCE(status, ''))) IN ('pagada', 'paid') THEN 'pagada' WHEN lower(trim(COALESCE(status, ''))) IN ('vencida', 'vencido', 'overdue') THEN 'vencida' ELSE 'pending' END`);
+    await pool.query(`ALTER TABLE invoice_items ADD COLUMN IF NOT EXISTS description TEXT NOT NULL DEFAULT ''`);
+    await pool.query(`ALTER TABLE invoice_items ADD COLUMN IF NOT EXISTS quantity NUMERIC(15, 2) NOT NULL DEFAULT 1`);
+    await pool.query(`ALTER TABLE invoice_items ADD COLUMN IF NOT EXISTS unit_price NUMERIC(15, 2) NOT NULL DEFAULT 0`);
+    await pool.query(`ALTER TABLE invoice_items ADD COLUMN IF NOT EXISTS line_total NUMERIC(15, 2) NOT NULL DEFAULT 0`);
+    await pool.query(`ALTER TABLE invoice_items ADD COLUMN IF NOT EXISTS sort_order INTEGER NOT NULL DEFAULT 0`);
+    await pool.query(`ALTER TABLE invoice_items ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()`);
+
+    // Seed admin (✅ role = 'admin' consistente)
     const adminEmail = "admin@example.com";
-    const adminPw = "admin123"; // contraseña sencilla
+    const adminPw = "admin123";
     const hashed = await bcrypt.hash(adminPw, 10);
+
     try {
       await pool.query(
         `INSERT INTO users (email, password, role, name)
          SELECT $1, $2, 'Admin', 'Administrador'
          WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = $1)`,
-        [adminEmail, hashed]
+        [normalizeEmail(adminEmail), hashed]
       );
       console.log(`admin user seeded: ${adminEmail} / ${adminPw}`);
     } catch (innerErr) {
-      // ignore enum errors or others during seeding
       console.warn("No se pudo insertar usuario admin automáticamente:", innerErr.message);
     }
   } catch (err) {
@@ -435,7 +1388,9 @@ async function initDb() {
 
 initDb();
 
-// Arrancar servidor
+// =======================
+// Start server
+// =======================
 app.listen(PORT, () => {
   console.log(`Servidor escuchando en puerto ${PORT}`);
 });

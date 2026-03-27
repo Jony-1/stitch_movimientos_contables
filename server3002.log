@@ -1,0 +1,41 @@
+
+> stitch-movimientos-contables@1.0.0 prestart
+> npm run build:web
+
+
+> stitch-movimientos-contables@1.0.0 build:web
+> astro build
+
+[2m09:51:05[22m [34m[types][39m Generated [2m75ms[22m
+[2m09:51:05[22m [34m[build][39m output: [34m"static"[39m
+[2m09:51:05[22m [34m[build][39m mode: [34m"static"[39m
+[2m09:51:05[22m [34m[build][39m directory: [34mC:\Users\jonat\Downloads\stitch_movimientos_contables\stitch_movimientos_contables\dist\[39m
+[2m09:51:05[22m [34m[build][39m Collecting build info...
+[2m09:51:05[22m [34m[build][39m [32m✓ Completed in 120ms.[39m
+[2m09:51:05[22m [34m[build][39m Building static entrypoints...
+[33m[1m09:51:07[22m [WARN] [vite][39m [33m"matchHostname", "matchPathname", "matchPort" and "matchProtocol" are imported from external module "@astrojs/internal-helpers/remote" but never used in "node_modules/astro/dist/assets/utils/index.js".[39m
+[2m09:51:07[22m [34m[vite][39m [32m✓ built in 2.29s[39m
+[2m09:51:07[22m [34m[vite][39m [32m✓ built in 8ms[39m
+[2m09:51:07[22m [34m[build][39m Rearranging server assets...
+
+[42m[30m generating static routes [39m[49m
+[2m09:51:08[22m   [34m├─[39m [2m/configuraciones/index.html[22m [2m(+55ms)[22m 
+[2m09:51:08[22m   [34m├─[39m [2m/dashboard/index.html[22m [2m(+23ms)[22m 
+[2m09:51:08[22m   [34m├─[39m [2m/facturas/index.html[22m [2m(+34ms)[22m 
+[2m09:51:08[22m   [34m├─[39m [2m/login/index.html[22m [2m(+39ms)[22m 
+[2m09:51:08[22m   [34m├─[39m [2m/movimientos/index.html[22m [2m(+17ms)[22m 
+[2m09:51:08[22m   [34m├─[39m [2m/register/index.html[22m [2m(+19ms)[22m 
+[2m09:51:08[22m   [34m├─[39m [2m/reportes/index.html[22m [2m(+11ms)[22m 
+[2m09:51:08[22m   [34m├─[39m [2m/usuarios/index.html[22m [2m(+21ms)[22m 
+[2m09:51:08[22m   [34m├─[39m [2m/index.html[22m [2m(+22ms)[22m 
+[2m09:51:08[22m [32m✓ Completed in 287ms.
+[39m
+[2m09:51:08[22m [34m[build][39m [32m✓ Completed in 2.74s.[39m
+[2m09:51:08[22m [34m[build][39m 9 page(s) built in [1m2.88s[22m
+[2m09:51:08[22m [34m[build][39m [1mComplete![22m
+
+> stitch-movimientos-contables@1.0.0 start
+> node server.js
+
+Servidor escuchando en puerto 3002
+admin user seeded: admin@example.com / admin123

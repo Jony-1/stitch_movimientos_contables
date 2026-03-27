@@ -1,0 +1,85 @@
+---
+import Head from "../components/Head.astro";
+
+const { title } = Astro.props;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <Head title={title} />
+  </head>
+  <body class="min-h-screen font-display text-slate-900 antialiased transition-colors duration-300 dark:text-slate-100">
+    <div class="relative min-h-screen overflow-hidden bg-transparent">
+      <div class="absolute right-4 top-4 z-20 sm:right-6 sm:top-6">
+        <button
+          type="button"
+          data-theme-toggle
+          class="flex h-10 items-center gap-2 rounded-full border border-slate-200 bg-white px-3 text-slate-600 shadow-sm transition-colors hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+          aria-label="Cambiar tema"
+          aria-pressed="false"
+          title="Cambiar tema"
+        >
+          <span class="material-symbols-outlined text-2xl" data-theme-icon>dark_mode</span>
+          <span class="hidden text-sm font-semibold sm:inline" data-theme-label>Modo noche</span>
+        </button>
+      </div>
+      <slot />
+    </div>
+
+    <script is:inline>
+      document.addEventListener("DOMContentLoaded", function () {
+        var buttons = document.querySelectorAll("[data-theme-toggle]");
+
+        function currentTheme() {
+          return document.documentElement.classList.contains("dark") ? "dark" : "light";
+        }
+
+        function syncThemeButton(button, theme) {
+          var icon = button.querySelector("[data-theme-icon]");
+          var label = button.querySelector("[data-theme-label]");
+          var nextTheme = theme === "dark" ? "light" : "dark";
+
+          button.setAttribute("aria-pressed", theme === "dark" ? "true" : "false");
+          button.setAttribute("aria-label", theme === "dark" ? "Cambiar a modo claro" : "Cambiar a modo noche");
+          button.setAttribute("title", theme === "dark" ? "Cambiar a modo claro" : "Cambiar a modo noche");
+
+          if (icon) {
+            icon.textContent = theme === "dark" ? "light_mode" : "dark_mode";
+          }
+
+          if (label) {
+            label.textContent = theme === "dark" ? "Modo claro" : "Modo noche";
+          }
+
+          button.dataset.nextTheme = nextTheme;
+        }
+
+        function syncTheme(theme) {
+          buttons.forEach(function (button) {
+            syncThemeButton(button, theme);
+          });
+        }
+
+        syncTheme(currentTheme());
+
+        buttons.forEach(function (button) {
+          button.addEventListener("click", function () {
+            var nextTheme = button.dataset.nextTheme || (currentTheme() === "dark" ? "light" : "dark");
+            if (window.StitchTheme && typeof window.StitchTheme.apply === "function") {
+              window.StitchTheme.apply(nextTheme, true);
+            } else {
+              document.documentElement.classList.toggle("dark", nextTheme === "dark");
+              document.documentElement.classList.toggle("light", nextTheme !== "dark");
+            }
+            syncTheme(nextTheme);
+          });
+        });
+
+        window.addEventListener("stitch-theme-change", function (event) {
+          syncTheme((event && event.detail && event.detail.theme) || currentTheme());
+        });
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,81 @@
+---
+import AppLayout from "../layouts/AppLayout.astro";
+---
+
+<AppLayout title="Dashboard" active="dashboard" name="Usuario" role="Productor" email="user@demo.com">
+  <div class="mx-auto flex max-w-7xl flex-col gap-6">
+    <section class="surface-card rounded-3xl p-6 sm:p-8">
+      <div class="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p class="text-xs uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">Resumen general</p>
+          <h1 class="text-4xl font-black text-slate-900 dark:text-white">Hola, <span id="dashboard-user-name">Usuario</span></h1>
+          <p class="text-slate-500 dark:text-slate-400">Este es el estado actual de tus movimientos y tu balance.</p>
+          <p id="dashboard-status" class="mt-2 text-sm text-slate-500 dark:text-slate-400"></p>
+        </div>
+        <a href="/movimientos" class="inline-flex min-w-[160px] items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-primary/90">
+          <span class="material-symbols-outlined text-base">add_circle</span>
+          <span>Nuevo movimiento</span>
+        </a>
+      </div>
+    </section>
+
+    <section class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <article class="surface-card p-6">
+        <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Ingresos</p>
+        <p id="dashboard-income" class="mt-2 text-3xl font-black text-emerald-600">$0</p>
+      </article>
+      <article class="surface-card p-6">
+        <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Gastos</p>
+        <p id="dashboard-expense" class="mt-2 text-3xl font-black text-rose-600">$0</p>
+      </article>
+      <article class="surface-card p-6">
+        <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Saldo</p>
+        <p id="dashboard-balance" class="mt-2 text-3xl font-black text-slate-900 dark:text-white">$0</p>
+      </article>
+      <article class="surface-card p-6">
+        <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Movimientos</p>
+        <p id="dashboard-count" class="mt-2 text-3xl font-black text-slate-900 dark:text-white">0</p>
+      </article>
+    </section>
+
+    <section class="grid grid-cols-1 gap-6 xl:grid-cols-5">
+      <div class="surface-card xl:col-span-3 p-6">
+        <div class="mb-4 flex items-center justify-between gap-3">
+          <div>
+            <h2 class="text-lg font-bold text-slate-900 dark:text-white">Últimos movimientos</h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400">Lo más reciente del ciclo activo.</p>
+          </div>
+          <a href="/movimientos" class="text-sm font-semibold text-primary hover:underline">Ver todo</a>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-slate-50 dark:bg-slate-900/40">
+              <tr>
+                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Fecha</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Descripción</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Tipo</th>
+                <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">Monto</th>
+              </tr>
+            </thead>
+            <tbody id="dashboard-recent-tbody" class="divide-y divide-slate-200 dark:divide-slate-800"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="surface-card xl:col-span-2 p-6">
+        <h2 class="text-lg font-bold text-slate-900 dark:text-white">Acciones rápidas</h2>
+        <div class="mt-4 flex flex-col gap-3">
+          <a href="/movimientos" class="rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-800 dark:text-slate-200 dark:hover:bg-slate-900/40">Registrar movimiento</a>
+          <a href="/reportes" class="rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-800 dark:text-slate-200 dark:hover:bg-slate-900/40">Abrir reportes</a>
+          <a href="/facturas" class="rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-800 dark:text-slate-200 dark:hover:bg-slate-900/40">Revisar facturas</a>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script type="module">
+    import { initDashboardPage } from "../scripts/dashboard-page.js";
+    initDashboardPage();
+  </script>
+</AppLayout>

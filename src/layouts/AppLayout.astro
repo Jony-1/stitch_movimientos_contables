@@ -1,0 +1,139 @@
+---
+import Head from "../components/Head.astro";
+import Sidebar from "../components/Sidebar.astro";
+import AppHeader from "../components/AppHeader.astro";
+
+const { title, active, name, role, email } = Astro.props;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <Head title={title} />
+  </head>
+  <body class="min-h-screen font-display text-slate-900 antialiased transition-colors duration-300 dark:text-slate-100">
+    <div class="flex min-h-screen w-full bg-transparent">
+      <div id="sidebar-overlay" class="fixed inset-0 z-40 hidden bg-slate-950/50 transition-opacity duration-300 md:hidden" data-sidebar-close></div>
+      <aside id="sidebar-container" class="surface-shell fixed left-0 top-0 z-50 h-screen w-72 max-w-[85vw] -translate-x-full overflow-y-auto border-r shadow-2xl transition-transform duration-300 ease-in-out md:static md:translate-x-0 md:shadow-none">
+        <Sidebar active={active} />
+      </aside>
+
+      <main class="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <div class="surface-shell sticky top-0 z-30 flex h-16 flex-shrink-0 items-center border-b px-2 shadow-sm sm:px-3 lg:px-4">
+          <button id="sidebar-toggle" class="flex-shrink-0 rounded-xl p-3 text-slate-600 transition-colors hover:bg-slate-100 md:hidden" title="Abrir menu">
+            <span class="material-symbols-outlined text-2xl">menu</span>
+          </button>
+          <div id="app-header" class="min-w-0 flex-1 overflow-hidden px-2 sm:px-4">
+            <AppHeader name={name} role={role} email={email} />
+          </div>
+        </div>
+
+        <div class="w-full flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+          <slot />
+        </div>
+      </main>
+    </div>
+
+    <script is:inline>
+      document.addEventListener("DOMContentLoaded", function () {
+        var toggle = document.getElementById("sidebar-toggle");
+        var container = document.getElementById("sidebar-container");
+        var overlay = document.getElementById("sidebar-overlay");
+        var themeButtons = document.querySelectorAll("[data-theme-toggle]");
+
+        function currentTheme() {
+          return document.documentElement.classList.contains("dark") ? "dark" : "light";
+        }
+
+        function syncThemeButton(button, theme) {
+          var icon = button.querySelector("[data-theme-icon]");
+          var label = button.querySelector("[data-theme-label]");
+          var nextTheme = theme === "dark" ? "light" : "dark";
+
+          button.setAttribute("aria-pressed", theme === "dark" ? "true" : "false");
+          button.setAttribute("aria-label", theme === "dark" ? "Cambiar a modo claro" : "Cambiar a modo noche");
+          button.setAttribute("title", theme === "dark" ? "Cambiar a modo claro" : "Cambiar a modo noche");
+
+          if (icon) {
+            icon.textContent = theme === "dark" ? "light_mode" : "dark_mode";
+          }
+
+          if (label) {
+            label.textContent = theme === "dark" ? "Modo claro" : "Modo noche";
+          }
+
+          button.dataset.nextTheme = nextTheme;
+        }
+
+        function syncTheme(theme) {
+          themeButtons.forEach(function (button) {
+            syncThemeButton(button, theme);
+          });
+        }
+
+        if (!container || !overlay) return;
+
+        syncTheme(currentTheme());
+
+        function openSidebar() {
+          container.classList.remove("-translate-x-full");
+          overlay.classList.remove("hidden");
+        }
+
+        function closeSidebar() {
+          container.classList.add("-translate-x-full");
+          overlay.classList.add("hidden");
+        }
+
+        if (toggle) {
+          toggle.addEventListener("click", function (e) {
+            e.preventDefault();
+            if (container.classList.contains("-translate-x-full")) {
+              openSidebar();
+            } else {
+              closeSidebar();
+            }
+          });
+        }
+
+        overlay.addEventListener("click", closeSidebar);
+
+        themeButtons.forEach(function (button) {
+          button.addEventListener("click", function () {
+            var nextTheme = button.dataset.nextTheme || (currentTheme() === "dark" ? "light" : "dark");
+            if (window.StitchTheme && typeof window.StitchTheme.apply === "function") {
+              window.StitchTheme.apply(nextTheme, true);
+            } else {
+              document.documentElement.classList.toggle("dark", nextTheme === "dark");
+              document.documentElement.classList.toggle("light", nextTheme !== "dark");
+            }
+            syncTheme(nextTheme);
+          });
+        });
+
+        window.addEventListener("stitch-theme-change", function (event) {
+          syncTheme((event && event.detail && event.detail.theme) || currentTheme());
+        });
+
+        var navLinks = container.querySelectorAll("a[href], button");
+        navLinks.forEach(function (link) {
+          link.addEventListener("click", function () {
+            if (window.innerWidth < 768) {
+              setTimeout(closeSidebar, 100);
+            }
+          });
+        });
+
+        var resizeTimer;
+        window.addEventListener("resize", function () {
+          clearTimeout(resizeTimer);
+          resizeTimer = setTimeout(function () {
+            if (window.innerWidth >= 768) {
+              closeSidebar();
+            }
+          }, 250);
+        });
+      });
+    </script>
+  </body>
+</html>

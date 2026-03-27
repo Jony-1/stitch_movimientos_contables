@@ -1,0 +1,72 @@
+---
+import AuthLayout from "../layouts/AuthLayout.astro";
+---
+
+<AuthLayout title="Crear cuenta">
+  <div class="relative z-10 min-h-screen px-4 py-8 sm:py-12">
+    <div class="mx-auto grid min-h-[calc(100vh-4rem)] w-full max-w-6xl items-center gap-8 lg:grid-cols-[0.95fr_1.05fr]">
+      <section class="relative overflow-hidden rounded-[2rem] border border-white/20 bg-[linear-gradient(135deg,#0f172a_0%,#14532d_45%,#10b981_100%)] p-8 text-white shadow-2xl sm:p-10 lg:p-12">
+        <div class="absolute -right-24 top-8 h-56 w-56 rounded-full bg-white/10 blur-3xl"></div>
+        <div class="absolute -bottom-24 left-0 h-56 w-56 rounded-full bg-emerald-400/20 blur-3xl"></div>
+        <div class="relative flex h-full flex-col justify-between gap-10">
+          <div class="flex items-center gap-3">
+            <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15 ring-1 ring-white/20">
+              <span class="material-symbols-outlined text-3xl">person_add</span>
+            </div>
+            <div>
+              <p class="text-xs uppercase tracking-[0.35em] text-white/70">Stitch</p>
+              <h1 class="text-3xl font-black tracking-[-0.04em] sm:text-4xl">Crear cuenta de productor</h1>
+            </div>
+          </div>
+
+          <div class="max-w-xl space-y-4">
+            <p class="text-lg leading-relaxed text-white/85 sm:text-xl">Regístrate para entrar al panel y comenzar a registrar tus movimientos y facturas.</p>
+            <div class="grid gap-3 sm:grid-cols-3">
+              <div class="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm"><p class="text-2xl font-bold">01</p><p class="text-sm text-white/75">Acceso rápido</p></div>
+              <div class="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm"><p class="text-2xl font-bold">02</p><p class="text-sm text-white/75">Perfil de productor</p></div>
+              <div class="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm"><p class="text-2xl font-bold">03</p><p class="text-sm text-white/75">Sesión segura</p></div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3 text-sm text-white/70">
+            <span class="inline-flex h-2.5 w-2.5 rounded-full bg-emerald-300"></span>
+            Registro directo sobre la misma base de datos
+          </div>
+        </div>
+      </section>
+
+      <section class="surface-card-strong rounded-[2rem] p-6 sm:p-8 lg:p-10 dark:bg-slate-950/85">
+        <div class="mx-auto flex w-full max-w-md flex-col gap-8">
+          <div class="space-y-2 text-center">
+            <div class="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <span class="material-symbols-outlined text-3xl">person_add</span>
+            </div>
+            <h2 class="text-3xl font-black tracking-[-0.04em] text-slate-900 dark:text-slate-100">Crear cuenta</h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400">Completa tus datos para empezar</p>
+          </div>
+
+          <form id="register-form" class="flex w-full flex-col gap-4">
+            <div id="register-error" class="min-h-5 text-sm text-red-600 dark:text-red-400"></div>
+
+            <label class="flex w-full flex-col"><p class="pb-2 text-base font-medium text-slate-900 dark:text-slate-100">Nombre</p><input name="name" class="form-input flex h-14 w-full rounded-xl border border-slate-300 bg-white px-4 text-base text-slate-900 focus:border-primary focus:outline-0 focus:ring-2 focus:ring-primary/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500" placeholder="Tu nombre" required /></label>
+            <label class="flex w-full flex-col"><p class="pb-2 text-base font-medium text-slate-900 dark:text-slate-100">Correo</p><input name="email" type="email" class="form-input flex h-14 w-full rounded-xl border border-slate-300 bg-white px-4 text-base text-slate-900 focus:border-primary focus:outline-0 focus:ring-2 focus:ring-primary/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500" placeholder="correo@ejemplo.com" required /></label>
+            <label class="flex w-full flex-col"><p class="pb-2 text-base font-medium text-slate-900 dark:text-slate-100">Contraseña</p><input name="password" type="password" class="form-input flex h-14 w-full rounded-xl border border-slate-300 bg-white px-4 text-base text-slate-900 focus:border-primary focus:outline-0 focus:ring-2 focus:ring-primary/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500" placeholder="Mínimo 6 caracteres" minlength="6" required /></label>
+            <label class="flex w-full flex-col"><p class="pb-2 text-base font-medium text-slate-900 dark:text-slate-100">Confirmar contraseña</p><input name="confirmPassword" type="password" class="form-input flex h-14 w-full rounded-xl border border-slate-300 bg-white px-4 text-base text-slate-900 focus:border-primary focus:outline-0 focus:ring-2 focus:ring-primary/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500" placeholder="Repite la contraseña" minlength="6" required /></label>
+
+            <button id="register-submit" class="flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-4 text-base font-semibold leading-none text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary/90">Crear cuenta</button>
+
+            <div class="flex items-center justify-center gap-2 pt-2">
+              <p class="text-sm text-slate-500 dark:text-slate-400">¿Ya tienes cuenta?</p>
+              <a class="text-sm font-semibold text-primary hover:underline dark:text-sky-400" href="/login">Iniciar sesión</a>
+            </div>
+          </form>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initRegisterPage } from "../scripts/register-page.js";
+    initRegisterPage();
+  </script>
+</AuthLayout>

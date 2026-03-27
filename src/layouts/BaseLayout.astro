@@ -1,0 +1,29 @@
+---
+import "../styles/global.css";
+
+const { title = "Stitch", description = "Migración progresiva a Astro" } = Astro.props;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <title>{title}</title>
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Astro MVP</p>
+          <h1>Stitch contable</h1>
+        </div>
+        <span class="badge">base lista</span>
+      </header>
+      <main class="content">
+        <slot />
+      </main>
+    </div>
+  </body>
+</html>
