@@ -203,6 +203,54 @@ function renderPartyBars(parties) {
     .join("");
 }
 
+function renderCopilotAlerts(alerts) {
+  const safeAlerts = Array.isArray(alerts) ? alerts.slice(0, 4) : [];
+  if (!safeAlerts.length) {
+    return `<div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-800 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300">No hay alertas críticas para este período.</div>`;
+  }
+
+  return safeAlerts.map((alert) => {
+    const severity = String(alert.severity || "low").toLowerCase();
+    const tone = severity === "high"
+      ? "border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-900/40 dark:bg-rose-950/20 dark:text-rose-300"
+      : severity === "medium"
+        ? "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-300"
+        : "border-sky-200 bg-sky-50 text-sky-800 dark:border-sky-900/40 dark:bg-sky-950/20 dark:text-sky-300";
+
+    return `<article class="rounded-2xl border px-4 py-4 ${tone}">
+      <p class="text-sm font-bold">${escapeHtml(alert.title || "Alerta")}</p>
+      <p class="mt-1 text-sm opacity-90">${escapeHtml(alert.detail || "")}</p>
+    </article>`;
+  }).join("");
+}
+
+function renderPortfolioRanking(rows) {
+  const safeRows = Array.isArray(rows) ? rows.slice(0, 5) : [];
+  if (!safeRows.length) {
+    return `<div class="rounded-2xl border border-slate-200 px-4 py-4 text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">No hay suficientes empresas para comparar.</div>`;
+  }
+
+  return safeRows.map((row) => {
+    const tone = row.trafficLight === "green"
+      ? "border-emerald-200 bg-emerald-50 dark:border-emerald-900/40 dark:bg-emerald-950/20"
+      : row.trafficLight === "red"
+        ? "border-rose-200 bg-rose-50 dark:border-rose-900/40 dark:bg-rose-950/20"
+        : "border-amber-200 bg-amber-50 dark:border-amber-900/40 dark:bg-amber-950/20";
+    return `<article class="rounded-2xl border px-4 py-4 ${tone}">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <p class="text-sm font-bold text-slate-900 dark:text-white">${row.position}. ${escapeHtml(row.organizationName)}</p>
+          <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">Balance ${formatMoney(row.balance)} · Vencido ${formatMoney(row.invoiceOverdueAmount)}</p>
+        </div>
+        <div class="text-right">
+          <p class="text-xs uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Score</p>
+          <p class="mt-1 text-2xl font-black text-slate-900 dark:text-white">${row.score}</p>
+        </div>
+      </div>
+    </article>`;
+  }).join("");
+}
+
 function renderMovementsTable(rows) {
   const safeRows = Array.isArray(rows) ? rows : [];
   if (!safeRows.length) {
@@ -332,6 +380,7 @@ async function initReportsPage() {
   if (!user) return;
 
   const status = document.getElementById("reports-status");
+  const activeOrganization = document.getElementById("reports-active-organization");
   const periodLabel = document.getElementById("reports-period-label");
   const count = document.getElementById("report-count");
   const income = document.getElementById("report-ingresos");
@@ -354,9 +403,28 @@ async function initReportsPage() {
   const exportCsvBtn = document.getElementById("report-export-csv");
   const exportPdfBtn = document.getElementById("report-export-pdf");
   const presetButtons = Array.from(document.querySelectorAll("[data-report-range]"));
+  const copilotScore = document.getElementById("report-copilot-score");
+  const copilotLabel = document.getElementById("report-copilot-label");
+  const copilotSummary = document.getElementById("report-copilot-summary");
+  const copilotAlerts = document.getElementById("report-copilot-alerts");
+  const forecastBalance = document.getElementById("report-forecast-balance");
+  const forecastCollections = document.getElementById("report-forecast-collections");
+  const forecastConfidence = document.getElementById("report-forecast-confidence");
+  const portfolioSection = document.getElementById("reports-portfolio-section");
+  const portfolioSummary = document.getElementById("reports-portfolio-summary");
+  const portfolioGreen = document.getElementById("reports-portfolio-green");
+  const portfolioWarning = document.getElementById("reports-portfolio-warning");
+  const portfolioRisk = document.getElementById("reports-portfolio-risk");
+  const portfolioRanking = document.getElementById("reports-portfolio-ranking");
 
   const state = { preset: "all", from: "", to: "", type: "all" };
   let latestReport = null;
+  let latestCopilot = null;
+  let latestPortfolio = null;
+
+  if (activeOrganization) {
+    activeOrganization.textContent = user.activeOrganization?.name ? `Empresa activa: ${user.activeOrganization.name}` : "";
+  }
 
   function setStatus(message) {
     if (status) status.textContent = message || "";
@@ -400,6 +468,14 @@ async function initReportsPage() {
     return `/api/reports/overview${params.toString() ? `?${params.toString()}` : ""}`;
   }
 
+  function buildCopilotUrl() {
+    const filters = getFilters();
+    const params = new URLSearchParams();
+    if (filters.from) params.set("from", filters.from);
+    if (filters.to) params.set("to", filters.to);
+    return `/api/copilot/summary${params.toString() ? `?${params.toString()}` : ""}`;
+  }
+
   function buildPdfUrl() {
     return buildReportUrl().replace("/api/reports/overview", "/api/reports/overview/pdf");
   }
@@ -414,8 +490,14 @@ async function initReportsPage() {
     state.to = filters.to || "";
     state.type = filters.type || "all";
     const url = buildReportUrl();
-    const report = await apiJson(url);
+    const requests = [apiJson(url), apiJson(buildCopilotUrl())];
+    if (Array.isArray(user.organizations) && user.organizations.length > 1) {
+      requests.push(apiJson(`/api/portfolio/overview${url.includes("?") ? url.slice(url.indexOf("?")) : ""}`));
+    }
+    const [report, copilot, portfolio] = await Promise.all(requests);
     latestReport = report;
+    latestCopilot = copilot;
+    latestPortfolio = portfolio || null;
     return report;
   }
 
@@ -432,6 +514,24 @@ async function initReportsPage() {
     if (invoicePending) invoicePending.textContent = formatMoney(summary.invoicePendingAmount || 0);
     if (invoiceTotal) invoiceTotal.textContent = formatMoney(summary.invoiceTotal || 0);
     if (periodLabel) periodLabel.textContent = describeFilters(safeReport.filters);
+
+    if (copilotScore) copilotScore.textContent = String(latestCopilot?.score?.value || 0);
+    if (copilotLabel) copilotLabel.textContent = String(latestCopilot?.score?.label || "sin datos");
+    if (copilotSummary) copilotSummary.textContent = Array.isArray(latestCopilot?.highlights) && latestCopilot.highlights.length
+      ? latestCopilot.highlights.join(" ")
+      : "Sin observaciones adicionales para este período.";
+    if (copilotAlerts) copilotAlerts.innerHTML = renderCopilotAlerts(latestCopilot?.alerts || []);
+    if (forecastBalance) forecastBalance.textContent = formatMoney(latestCopilot?.forecast?.next30Days?.estimatedBalance || 0);
+    if (forecastCollections) forecastCollections.textContent = formatMoney(latestCopilot?.forecast?.next30Days?.estimatedCollections || 0);
+    if (forecastConfidence) forecastConfidence.textContent = String(latestCopilot?.forecast?.confidence || "—").toUpperCase();
+    if (latestPortfolio && portfolioSection) {
+      portfolioSection.classList.remove("hidden");
+      if (portfolioSummary) portfolioSummary.textContent = Array.isArray(latestPortfolio.highlights) ? latestPortfolio.highlights.join(" ") : "";
+      if (portfolioGreen) portfolioGreen.textContent = String(latestPortfolio.summary?.healthyCompanies || 0);
+      if (portfolioWarning) portfolioWarning.textContent = String(latestPortfolio.summary?.warningCompanies || 0);
+      if (portfolioRisk) portfolioRisk.textContent = String(latestPortfolio.summary?.riskCompanies || 0);
+      if (portfolioRanking) portfolioRanking.innerHTML = renderPortfolioRanking(latestPortfolio.ranking || []);
+    }
 
     if (categoryList) categoryList.innerHTML = renderMovementCategory(safeReport.movements?.byCategory || []);
     if (monthlyList) monthlyList.innerHTML = renderMonthlyTrend(safeReport.movements?.byMonth || []);
@@ -455,6 +555,8 @@ async function initReportsPage() {
     setStatus("Cargando reportes...");
     if (movementsTbody) movementsTbody.innerHTML = `<tr><td colspan="6" class="px-4 py-10 text-center text-sm text-slate-500 dark:text-slate-400">Cargando movimientos...</td></tr>`;
     if (invoicesTbody) invoicesTbody.innerHTML = `<tr><td colspan="6" class="px-4 py-10 text-center text-sm text-slate-500 dark:text-slate-400">Cargando facturas...</td></tr>`;
+    if (copilotAlerts) copilotAlerts.innerHTML = `<div class="rounded-2xl border border-slate-200 px-4 py-4 text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">Analizando resumen ejecutivo...</div>`;
+    if (portfolioSection && portfolioRanking) portfolioRanking.innerHTML = `<div class="rounded-2xl border border-slate-200 px-4 py-4 text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">Comparando empresas...</div>`;
 
     try {
       const report = await fetchReport();
@@ -465,6 +567,11 @@ async function initReportsPage() {
       if (monthlyList) monthlyList.innerHTML = `<div class="rounded-2xl border border-dashed border-rose-200 bg-rose-50/70 p-4 text-sm text-rose-700">No fue posible obtener la tendencia.</div>`;
       if (invoiceStatusList) invoiceStatusList.innerHTML = `<div class="rounded-2xl border border-dashed border-rose-200 bg-rose-50/70 p-4 text-sm text-rose-700">No fue posible obtener el estado de facturas.</div>`;
       if (invoicePartyList) invoicePartyList.innerHTML = `<div class="rounded-2xl border border-dashed border-rose-200 bg-rose-50/70 p-4 text-sm text-rose-700">No fue posible obtener las contrapartes.</div>`;
+      if (copilotAlerts) copilotAlerts.innerHTML = `<div class="rounded-2xl border border-dashed border-rose-200 bg-rose-50/70 p-4 text-sm text-rose-700">No fue posible cargar el resumen ejecutivo financiero.</div>`;
+      if (portfolioSection && portfolioRanking) {
+        portfolioSection.classList.remove("hidden");
+        portfolioRanking.innerHTML = `<div class="rounded-2xl border border-dashed border-rose-200 bg-rose-50/70 p-4 text-sm text-rose-700">No fue posible cargar el comparativo multiempresa.</div>`;
+      }
     } finally {
       if (applyBtn) {
         applyBtn.disabled = false;

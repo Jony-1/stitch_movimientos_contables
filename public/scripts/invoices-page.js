@@ -470,6 +470,15 @@ async function initInvoicesPage() {
     return currentRenderedRows.find((row) => String(row.id) === String(id || ""));
   }
 
+  function selectInvoice(id, message) {
+    const inv = findRenderedInvoice(id);
+    if (!inv) return null;
+    if (status && message) status.textContent = message.replace("{number}", inv.number);
+    setDetail(inv);
+    syncSelectedRow();
+    return inv;
+  }
+
   const renderSelection = (inv) => {
     if (!inv) {
       selectedInvoice = null;
@@ -580,23 +589,13 @@ async function initInvoicesPage() {
 
     tbody.querySelectorAll("[data-select-invoice]").forEach((cell) => {
       cell.addEventListener("click", () => {
-        const inv = findRenderedInvoice(cell.dataset.selectInvoice);
-        if (inv) {
-          if (status) status.textContent = `Mostrando factura ${inv.number}.`;
-          setDetail(inv);
-          syncSelectedRow();
-        }
+        selectInvoice(cell.dataset.selectInvoice, "Mostrando factura {number}.");
       });
 
       cell.addEventListener("keydown", (event) => {
         if (event.key !== "Enter" && event.key !== " ") return;
         event.preventDefault();
-        const inv = findRenderedInvoice(cell.dataset.selectInvoice);
-        if (inv) {
-          if (status) status.textContent = `Mostrando factura ${inv.number}.`;
-          setDetail(inv);
-          syncSelectedRow();
-        }
+        selectInvoice(cell.dataset.selectInvoice, "Mostrando factura {number}.");
       });
     });
 
@@ -615,9 +614,7 @@ async function initInvoicesPage() {
         }
 
         if (action === "view") {
-          if (status) status.textContent = `Mostrando factura ${inv.number}.`;
-          setDetail(inv);
-          syncSelectedRow();
+          selectInvoice(button.dataset.id, "Mostrando factura {number}.");
           return;
         }
 

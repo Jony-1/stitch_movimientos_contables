@@ -58,6 +58,12 @@ function renderStatusBadge(value) {
   return `<span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${meta.className}"><span class="size-2 rounded-full ${meta.dotClass}"></span>${meta.label}</span>`;
 }
 
+function getInvoiceFilterLabel(value) {
+  if (value === "due-soon") return "vence en 7 días";
+  if (value === "high-amount") return "alto monto";
+  return getStatusMeta(value).label.toLowerCase();
+}
+
 function safeArray(value) {
   return Array.isArray(value) ? value : [];
 }
@@ -82,6 +88,60 @@ function getPrintableStatusLabel(value) {
 
 function isPaidStatus(value) {
   return normalizeInvoiceStatus(value) === "pagada";
+}
+
+function toDateOnly(value) {
+  if (!value) return null;
+  const date = new Date(`${String(value).slice(0, 10)}T12:00:00`);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function getDaysUntilDue(value) {
+  const dueDate = toDateOnly(value);
+  if (!dueDate) return null;
+  const today = new Date();
+  const todayAtNoon = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 12, 0, 0, 0);
+  return Math.round((dueDate.getTime() - todayAtNoon.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+function isOverdueByDate(invoice) {
+  if (!invoice || isPaidStatus(invoice.status)) return false;
+  const days = getDaysUntilDue(invoice.dueDate);
+  return days !== null && days < 0;
+}
+
+function isDueSoon(invoice) {
+  if (!invoice || isPaidStatus(invoice.status)) return false;
+  const days = getDaysUntilDue(invoice.dueDate);
+  return days !== null && days >= 0 && days <= 7;
+}
+
+function getInvoicePriority(invoice) {
+  if (!invoice) return 0;
+  if (normalizeInvoiceStatus(invoice.status) === "vencida" || isOverdueByDate(invoice)) return 3;
+  if (isDueSoon(invoice)) return 2;
+  if (!isPaidStatus(invoice.status)) return 1;
+  return 0;
+}
+
+function describeInvoiceDueState(invoice) {
+  if (!invoice || isPaidStatus(invoice.status)) return "Pagada";
+  const days = getDaysUntilDue(invoice.dueDate);
+  if (days === null) return "Sin fecha de vencimiento";
+  if (days < 0) return `Vencida hace ${Math.abs(days)} día(s)`;
+  if (days === 0) return "Vence hoy";
+  if (days <= 7) return `Vence en ${days} día(s)`;
+  return `Vence en ${days} día(s)`;
+}
+
+function sortInvoicesByPriority(rows) {
+  return safeArray(rows).slice().sort((a, b) => {
+    const priorityDiff = getInvoicePriority(b) - getInvoicePriority(a);
+    if (priorityDiff !== 0) return priorityDiff;
+    const amountDiff = Number(b.amount || 0) - Number(a.amount || 0);
+    if (amountDiff !== 0) return amountDiff;
+    return String(b.id).localeCompare(String(a.id));
+  });
 }
 
 function createHiddenPrintFrame(html) {
@@ -401,9 +461,23 @@ async function initInvoicesPage() {
   const addItemBtn = document.getElementById("invoice-add-item");
   const payBtn = document.getElementById("invoice-pay");
   const printBtn = document.getElementById("invoice-print");
+  const activeOrganization = document.getElementById("invoices-active-organization");
+  const priorityTitle = document.getElementById("invoices-priority-title");
+  const prioritySummary = document.getElementById("invoices-priority-summary");
+  const priorityPending = document.getElementById("invoices-priority-pending");
+  const nextAction = document.getElementById("invoices-next-action");
+  const overdueCountNode = document.getElementById("invoice-kpi-overdue-count");
+  const overdueAmountNode = document.getElementById("invoice-kpi-overdue-amount");
+  const pendingAmountNode = document.getElementById("invoice-kpi-pending-amount");
+  const pendingCountNode = document.getElementById("invoice-kpi-pending-count");
+  const dueSoonCountNode = document.getElementById("invoice-kpi-due-soon-count");
+  const dueSoonAmountNode = document.getElementById("invoice-kpi-due-soon-amount");
+  const paidRateNode = document.getElementById("invoice-kpi-paid-rate");
+  const paidAmountNode = document.getElementById("invoice-kpi-paid-amount");
   const filterButtons = Array.from(document.querySelectorAll("[data-invoice-filter]"));
   const itemsList = modal?.querySelector("#invoice-items-list");
   if (!tbody || !detail || !modal || !actionModal || !newBtn || !form || !itemsList) return;
+  if (activeOrganization) activeOrganization.textContent = user.activeOrganization?.name ? `Empresa activa: ${user.activeOrganization.name}` : "";
   if (!writable) {
     if (newBtn) {
       newBtn.disabled = true;
@@ -470,6 +544,15 @@ async function initInvoicesPage() {
     return currentRenderedRows.find((row) => String(row.id) === String(id || ""));
   }
 
+  function selectInvoice(id, message) {
+    const inv = findRenderedInvoice(id);
+    if (!inv) return null;
+    if (status && message) status.textContent = message.replace("{number}", inv.number);
+    setDetail(inv);
+    syncSelectedRow();
+    return inv;
+  }
+
   const renderSelection = (inv) => {
     if (!inv) {
       selectedInvoice = null;
@@ -506,6 +589,15 @@ async function initInvoicesPage() {
     setText(detail, "#invoice-id", `#${inv.id}`);
     selectedInvoice = inv;
     renderInvoiceItemsDetail(inv);
+    if (nextAction) {
+      nextAction.textContent = normalizeInvoiceStatus(inv.status) === "vencida" || isOverdueByDate(inv)
+        ? `Prioridad operativa: cobrar ${inv.number}. ${describeInvoiceDueState(inv)} y representa ${formatMoney(inv.amount)}.`
+        : isDueSoon(inv)
+          ? `Acción recomendada: confirmar el cobro de ${inv.number}. ${describeInvoiceDueState(inv)}.`
+          : isPaidStatus(inv.status)
+            ? `Factura ${inv.number} ya cerrada. Puedes exportar el PDF o revisar la siguiente prioridad.`
+            : `Acción recomendada: validar seguimiento y fecha de vencimiento de ${inv.number}.`;
+    }
     if (payBtn) {
       const paid = isPaidStatus(inv.status);
       payBtn.disabled = !writable || paid;
@@ -537,7 +629,7 @@ async function initInvoicesPage() {
   }
 
   function renderEmpty() {
-    const emptyMessage = currentFilter === "all" ? "No hay facturas registradas aún." : `No hay facturas en estado ${getStatusMeta(currentFilter).label.toLowerCase()}.`;
+    const emptyMessage = currentFilter === "all" ? "No hay facturas registradas aún." : `No hay facturas para el filtro ${getInvoiceFilterLabel(currentFilter)}.`;
     tbody.innerHTML = `<tr><td colspan="7" class="px-4 py-10 text-center text-sm text-slate-500 dark:text-slate-400">${escapeHtml(emptyMessage)}</td></tr>`;
     if (status) status.textContent = emptyMessage;
     renderSelection(null);
@@ -548,9 +640,66 @@ async function initInvoicesPage() {
     if (status) status.textContent = message;
   }
 
+  function updateInvoiceExecutive(rows) {
+    const allRows = safeArray(rows);
+    const overdueRows = allRows.filter((row) => normalizeInvoiceStatus(row.status) === "vencida" || isOverdueByDate(row));
+    const pendingRows = allRows.filter((row) => !isPaidStatus(row.status));
+    const dueSoonRows = allRows.filter((row) => isDueSoon(row));
+    const paidRows = allRows.filter((row) => isPaidStatus(row.status));
+    const overdueAmount = overdueRows.reduce((sum, row) => sum + Number(row.amount || 0), 0);
+    const pendingAmount = pendingRows.reduce((sum, row) => sum + Number(row.amount || 0), 0);
+    const dueSoonAmount = dueSoonRows.reduce((sum, row) => sum + Number(row.amount || 0), 0);
+    const paidAmount = paidRows.reduce((sum, row) => sum + Number(row.amount || 0), 0);
+    const paidRate = allRows.length ? Math.round((paidRows.length / allRows.length) * 100) : 0;
+
+    if (overdueCountNode) overdueCountNode.textContent = String(overdueRows.length);
+    if (overdueAmountNode) overdueAmountNode.textContent = formatMoney(overdueAmount);
+    if (pendingAmountNode) pendingAmountNode.textContent = formatMoney(pendingAmount);
+    if (pendingCountNode) pendingCountNode.textContent = `${pendingRows.length} factura(s)`;
+    if (dueSoonCountNode) dueSoonCountNode.textContent = String(dueSoonRows.length);
+    if (dueSoonAmountNode) dueSoonAmountNode.textContent = formatMoney(dueSoonAmount);
+    if (paidRateNode) paidRateNode.textContent = `${paidRate}%`;
+    if (paidAmountNode) paidAmountNode.textContent = formatMoney(paidAmount);
+    if (priorityPending) priorityPending.textContent = formatMoney(pendingAmount);
+
+    if (priorityTitle) {
+      priorityTitle.textContent = overdueRows.length
+        ? "Urgencia alta"
+        : dueSoonRows.length
+          ? "Atención esta semana"
+          : "Cartera bajo control";
+    }
+
+    if (prioritySummary) {
+      prioritySummary.textContent = overdueRows.length
+        ? `Tienes ${overdueRows.length} factura(s) vencida(s) por ${formatMoney(overdueAmount)}. Conviene priorizar su gestión hoy.`
+        : dueSoonRows.length
+          ? `${dueSoonRows.length} factura(s) vencen en los próximos 7 días por ${formatMoney(dueSoonAmount)}.`
+          : pendingRows.length
+            ? `No hay facturas vencidas. La cartera pendiente actual es ${formatMoney(pendingAmount)}.`
+            : "No hay presión de cartera en este momento.";
+    }
+
+    if (nextAction && !selectedInvoice) {
+      nextAction.textContent = overdueRows[0]
+        ? `Acción prioritaria: gestionar la factura ${overdueRows[0].number}. ${describeInvoiceDueState(overdueRows[0])}.`
+        : dueSoonRows[0]
+          ? `Acción recomendada: revisar ${dueSoonRows[0].number}. ${describeInvoiceDueState(dueSoonRows[0])}.`
+          : pendingRows[0]
+            ? `Acción recomendada: confirmar fecha y seguimiento de ${pendingRows[0].number}.`
+            : "No hay acciones urgentes. Puedes crear o revisar nuevas facturas.";
+    }
+  }
+
   function getVisibleRows(rows) {
-    const safeRows = safeArray(rows);
+    const safeRows = sortInvoicesByPriority(rows);
     if (currentFilter === "all") return safeRows;
+    if (currentFilter === "due-soon") return safeRows.filter((row) => isDueSoon(row));
+    if (currentFilter === "high-amount") {
+      const maxAmount = Math.max(...safeRows.map((row) => Number(row.amount || 0)), 0);
+      const threshold = maxAmount * 0.7;
+      return safeRows.filter((row) => Number(row.amount || 0) >= threshold && threshold > 0);
+    }
     return safeRows.filter((row) => normalizeInvoiceStatus(row.status) === currentFilter);
   }
 
@@ -559,7 +708,7 @@ async function initInvoicesPage() {
     const visibleRows = getVisibleRows(rowList) || [];
     if (!(visibleRows?.length ?? 0)) {
       renderEmpty();
-      if (status) status.textContent = currentFilter === "all" ? "No hay facturas todavía." : `No hay facturas con estado ${getStatusMeta(currentFilter).label.toLowerCase()}.`;
+      if (status) status.textContent = currentFilter === "all" ? "No hay facturas todavía." : `No hay facturas para el filtro ${getInvoiceFilterLabel(currentFilter)}.`;
       return;
     }
 
@@ -570,7 +719,10 @@ async function initInvoicesPage() {
         <td data-label="Número" data-select-invoice="${r.id}" tabindex="0" class="cursor-pointer px-4 py-3 text-slate-800 text-sm font-medium focus:outline-none focus-visible:bg-slate-50 dark:focus-visible:bg-slate-800/50">${escapeHtml(r.number)}</td>
         <td data-label="Contraparte" data-select-invoice="${r.id}" tabindex="0" class="cursor-pointer px-4 py-3 text-slate-500 text-sm focus:outline-none focus-visible:bg-slate-50 dark:focus-visible:bg-slate-800/50">${escapeHtml(r.party)}</td>
         <td data-label="Emisión" data-select-invoice="${r.id}" tabindex="0" class="cursor-pointer px-4 py-3 text-slate-500 text-sm focus:outline-none focus-visible:bg-slate-50 dark:focus-visible:bg-slate-800/50">${escapeHtml(formatDate(r.date))}</td>
-        <td data-label="Vencimiento" data-select-invoice="${r.id}" tabindex="0" class="cursor-pointer px-4 py-3 text-slate-500 text-sm focus:outline-none focus-visible:bg-slate-50 dark:focus-visible:bg-slate-800/50">${escapeHtml(formatDate(r.dueDate))}</td>
+        <td data-label="Vencimiento" data-select-invoice="${r.id}" tabindex="0" class="cursor-pointer px-4 py-3 text-slate-500 text-sm focus:outline-none focus-visible:bg-slate-50 dark:focus-visible:bg-slate-800/50">
+          <div>${escapeHtml(formatDate(r.dueDate))}</div>
+          <div class="mt-1 text-xs ${getInvoicePriority(r) >= 3 ? "text-rose-600 dark:text-rose-300" : getInvoicePriority(r) === 2 ? "text-amber-600 dark:text-amber-300" : "text-slate-400 dark:text-slate-500"}">${escapeHtml(describeInvoiceDueState(r))}</div>
+        </td>
         <td data-label="Monto" data-select-invoice="${r.id}" tabindex="0" class="cursor-pointer px-4 py-3 text-slate-500 text-sm focus:outline-none focus-visible:bg-slate-50 dark:focus-visible:bg-slate-800/50">${escapeHtml(formatMoney(r.amount))}</td>
         <td data-label="Estado" data-select-invoice="${r.id}" tabindex="0" class="cursor-pointer px-4 py-3 text-sm focus:outline-none focus-visible:bg-slate-50 dark:focus-visible:bg-slate-800/50">${renderStatusBadge(r.status)}</td>
         <td data-label="Acciones" class="px-4 py-3 text-right">
@@ -580,23 +732,13 @@ async function initInvoicesPage() {
 
     tbody.querySelectorAll("[data-select-invoice]").forEach((cell) => {
       cell.addEventListener("click", () => {
-        const inv = findRenderedInvoice(cell.dataset.selectInvoice);
-        if (inv) {
-          if (status) status.textContent = `Mostrando factura ${inv.number}.`;
-          setDetail(inv);
-          syncSelectedRow();
-        }
+        selectInvoice(cell.dataset.selectInvoice, "Mostrando factura {number}.");
       });
 
       cell.addEventListener("keydown", (event) => {
         if (event.key !== "Enter" && event.key !== " ") return;
         event.preventDefault();
-        const inv = findRenderedInvoice(cell.dataset.selectInvoice);
-        if (inv) {
-          if (status) status.textContent = `Mostrando factura ${inv.number}.`;
-          setDetail(inv);
-          syncSelectedRow();
-        }
+        selectInvoice(cell.dataset.selectInvoice, "Mostrando factura {number}.");
       });
     });
 
@@ -615,9 +757,7 @@ async function initInvoicesPage() {
         }
 
         if (action === "view") {
-          if (status) status.textContent = `Mostrando factura ${inv.number}.`;
-          setDetail(inv);
-          syncSelectedRow();
+          selectInvoice(button.dataset.id, "Mostrando factura {number}.");
           return;
         }
 
@@ -643,6 +783,7 @@ async function initInvoicesPage() {
       });
     });
 
+    updateInvoiceExecutive(rowList);
     if (visibleRows[0]) setDetail(visibleRows[0]);
     syncSelectedRow();
     if (status) status.textContent = `${visibleRows?.length ?? 0} factura(s) cargada(s).`;

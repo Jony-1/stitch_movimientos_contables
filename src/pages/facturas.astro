@@ -2,7 +2,7 @@
 import AppLayout from "../layouts/AppLayout.astro";
 ---
 
-<AppLayout title="Facturas" active="facturas" name="Usuario" role="Productor" email="user@demo.com">
+<AppLayout title="Facturas" active="facturas" name="Miembro" role="Gestión" email="usuario@stitch.local">
   <style>
     #invoices-table thead,
     #invoices-table thead tr,
@@ -32,6 +32,7 @@ import AppLayout from "../layouts/AppLayout.astro";
           <p class="text-xs uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">Ventas y cuentas</p>
           <h1 class="text-4xl font-black text-slate-900 dark:text-white">Facturas</h1>
           <p class="text-slate-500 dark:text-slate-400">Consulta, filtra y actualiza facturas sin perder contexto.</p>
+          <p id="invoices-active-organization" class="mt-2 text-sm font-semibold text-primary dark:text-primary/90"></p>
           <p id="invoices-status" class="mt-2 text-sm text-slate-500 dark:text-slate-400"></p>
         </div>
         <button id="btn-new-invoice" class="flex min-w-[160px] items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-primary/90">
@@ -39,6 +40,50 @@ import AppLayout from "../layouts/AppLayout.astro";
           <span class="truncate">Nueva Factura</span>
         </button>
       </div>
+    </section>
+
+    <section class="grid grid-cols-1 gap-6 xl:grid-cols-5">
+      <article class="surface-card p-6 xl:col-span-3">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p class="text-xs uppercase tracking-[0.25em] text-slate-500 dark:text-slate-400">Urgencia de cartera</p>
+            <h2 id="invoices-priority-title" class="mt-2 text-3xl font-black text-slate-900 dark:text-white">Analizando prioridades...</h2>
+            <p id="invoices-priority-summary" class="mt-3 max-w-2xl text-sm leading-7 text-slate-600 dark:text-slate-300">Calculando qué facturas requieren atención inmediata.</p>
+          </div>
+          <div class="rounded-2xl bg-slate-50 px-4 py-4 text-right dark:bg-slate-900/40">
+            <p class="text-xs uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Cartera pendiente</p>
+            <p id="invoices-priority-pending" class="mt-2 text-2xl font-black text-amber-600">$0</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="surface-card p-6 xl:col-span-2">
+        <h2 class="text-lg font-bold text-slate-900 dark:text-white">Acción recomendada</h2>
+        <p id="invoices-next-action" class="mt-3 text-sm leading-7 text-slate-600 dark:text-slate-300">Selecciona una factura o revisa las vencidas para ver la recomendación operativa más relevante.</p>
+      </article>
+    </section>
+
+    <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <article class="surface-card p-5">
+        <p class="text-xs uppercase tracking-[0.25em] text-slate-500 dark:text-slate-400">Vencidas</p>
+        <p id="invoice-kpi-overdue-count" class="mt-2 text-3xl font-black text-rose-600">0</p>
+        <p id="invoice-kpi-overdue-amount" class="mt-1 text-sm text-slate-500 dark:text-slate-400">$0</p>
+      </article>
+      <article class="surface-card p-5">
+        <p class="text-xs uppercase tracking-[0.25em] text-slate-500 dark:text-slate-400">Por cobrar</p>
+        <p id="invoice-kpi-pending-amount" class="mt-2 text-3xl font-black text-amber-600">$0</p>
+        <p id="invoice-kpi-pending-count" class="mt-1 text-sm text-slate-500 dark:text-slate-400">0 facturas</p>
+      </article>
+      <article class="surface-card p-5">
+        <p class="text-xs uppercase tracking-[0.25em] text-slate-500 dark:text-slate-400">Vence en 7 días</p>
+        <p id="invoice-kpi-due-soon-count" class="mt-2 text-3xl font-black text-amber-500">0</p>
+        <p id="invoice-kpi-due-soon-amount" class="mt-1 text-sm text-slate-500 dark:text-slate-400">$0</p>
+      </article>
+      <article class="surface-card p-5">
+        <p class="text-xs uppercase tracking-[0.25em] text-slate-500 dark:text-slate-400">Cobranza efectiva</p>
+        <p id="invoice-kpi-paid-rate" class="mt-2 text-3xl font-black text-emerald-600">0%</p>
+        <p id="invoice-kpi-paid-amount" class="mt-1 text-sm text-slate-500 dark:text-slate-400">$0</p>
+      </article>
     </section>
 
     <section class="surface-card p-4 sm:p-6">
@@ -50,6 +95,8 @@ import AppLayout from "../layouts/AppLayout.astro";
               <button data-invoice-filter="pagada" class="surface-chip text-slate-500 hover:bg-white dark:text-slate-400 dark:hover:bg-slate-700">Pagada</button>
               <button data-invoice-filter="pending" class="surface-chip text-slate-500 hover:bg-white dark:text-slate-400 dark:hover:bg-slate-700">Pendiente</button>
               <button data-invoice-filter="vencida" class="surface-chip text-slate-500 hover:bg-white dark:text-slate-400 dark:hover:bg-slate-700">Vencida</button>
+              <button data-invoice-filter="due-soon" class="surface-chip text-slate-500 hover:bg-white dark:text-slate-400 dark:hover:bg-slate-700">Vence 7 dias</button>
+              <button data-invoice-filter="high-amount" class="surface-chip text-slate-500 hover:bg-white dark:text-slate-400 dark:hover:bg-slate-700">Alto monto</button>
             </div>
           </div>
       </div>
@@ -162,7 +209,7 @@ import AppLayout from "../layouts/AppLayout.astro";
               <span id="invoice-total-preview">$0</span>
             </div>
           </div>
-          <div class="flex justify-end gap-3 pt-2"><p id="invoice-form-status" class="mr-auto self-center text-sm text-slate-500 dark:text-slate-400"></p><button type="button" data-modal-close class="rounded-lg bg-gray-100 px-4 py-2 dark:bg-gray-800">Cancelar</button><button id="invoice-submit" type="submit" class="rounded-lg bg-primary px-4 py-2 font-bold text-white hover:bg-primary/90">Guardar</button></div>
+          <div class="flex justify-end gap-3 pt-2"><p id="invoice-form-status" class="mr-auto self-center text-sm text-slate-500 dark:text-slate-400"></p><button type="button" data-modal-close class="rounded-lg bg-gray-100 px-4 py-2 dark:bg-gray-800 dark:text-gray-200">Cancelar</button><button id="invoice-submit" type="submit" class="rounded-lg bg-primary px-4 py-2 font-bold text-white hover:bg-primary/90">Guardar</button></div>
         </form>
       </div>
     </div>
@@ -180,7 +227,7 @@ import AppLayout from "../layouts/AppLayout.astro";
           <button type="button" data-invoice-action-close class="text-gray-500 hover:text-gray-900 dark:hover:text-white"><span class="material-symbols-outlined">close</span></button>
         </div>
         <div class="flex justify-end gap-3">
-          <button id="invoice-action-cancel" type="button" class="rounded-lg bg-gray-100 px-4 py-2 text-sm font-semibold dark:bg-gray-800">Cancelar</button>
+          <button id="invoice-action-cancel" type="button" class="rounded-lg bg-gray-100 px-4 py-2 text-sm font-semibold dark:bg-gray-800 dark:text-gray-200">Cancelar</button>
           <button id="invoice-action-confirm" type="button" class="rounded-lg px-4 py-2 text-sm font-semibold text-white"></button>
         </div>
       </div>

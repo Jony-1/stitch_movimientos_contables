@@ -2,19 +2,19 @@
 import AppLayout from "../layouts/AppLayout.astro";
 ---
 
-<AppLayout title="Usuarios" active="usuarios" name="Admin" role="Administrador" email="admin@demo.com">
+<AppLayout title="Usuarios" active="usuarios" name="Administrador" role="Administración" email="equipo@stitch.local">
   <div class="mx-auto max-w-6xl space-y-6">
-    <div class="surface-card shadow-[0_18px_40px_rgba(15,23,42,0.08)] backdrop-blur-xl flex items-center justify-between gap-4 rounded-3xl p-6">
+    <div class="surface-card flex items-center justify-between gap-4 rounded-3xl p-6">
       <div>
         <p class="text-xs uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">Administración</p>
-        <h1 class="text-3xl font-black text-slate-900 dark:text-white">Gestión de Usuarios</h1>
-        <p class="text-slate-500 dark:text-slate-400">Crea, edita o desactiva usuarios del sistema.</p>
+        <h1 class="text-3xl font-black text-slate-900 dark:text-white">Miembros de la empresa</h1>
+        <p class="text-slate-500 dark:text-slate-400">Invita, edita o desactiva miembros dentro de la empresa activa.</p>
         <p id="users-status" class="mt-2 text-sm text-slate-500 dark:text-slate-400"></p>
       </div>
-      <button id="btn-open-user-modal" type="button" class="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 font-bold text-white shadow-sm transition-colors hover:bg-primary/90"><span class="material-symbols-outlined">add</span>Nuevo usuario</button>
+      <button id="btn-open-user-modal" type="button" class="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 font-bold text-white shadow-sm transition-colors hover:bg-primary/90"><span class="material-symbols-outlined">add</span>Nuevo miembro</button>
     </div>
 
-    <div class="surface-card shadow-[0_18px_40px_rgba(15,23,42,0.08)] backdrop-blur-xl overflow-hidden">
+    <div class="surface-card overflow-hidden">
       <div class="overflow-x-auto">
         <table class="w-full min-w-[640px]">
           <thead class="bg-slate-50 dark:bg-slate-900"><tr><th class="px-4 py-3 text-left text-xs font-semibold uppercase text-slate-600 dark:text-slate-300">Nombre</th><th class="px-4 py-3 text-left text-xs font-semibold uppercase text-slate-600 dark:text-slate-300">Correo</th><th class="px-4 py-3 text-left text-xs font-semibold uppercase text-slate-600 dark:text-slate-300">Rol</th><th class="px-4 py-3 text-left text-xs font-semibold uppercase text-slate-600 dark:text-slate-300">Estado</th><th class="px-4 py-3"></th></tr></thead>
@@ -26,14 +26,14 @@ import AppLayout from "../layouts/AppLayout.astro";
     <div id="modal-user" aria-hidden="true" class="fixed inset-0 z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity">
       <div class="absolute inset-0 bg-black/40"></div>
       <div class="relative w-full max-w-xl p-4">
-        <div class="bg-slate-50 dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 shadow-lg">
-          <div class="flex items-start justify-between mb-4"><h2 class="text-lg font-bold text-slate-900 dark:text-white">Crear usuario</h2><button id="btn-close-user-modal" type="button" class="text-gray-500 hover:text-slate-900 dark:hover:text-white"><span class="material-symbols-outlined">close</span></button></div>
+        <div class="surface-card rounded-xl border border-slate-200 dark:border-slate-700 p-6 shadow-lg">
+          <div class="flex items-start justify-between mb-4"><h2 class="text-lg font-bold text-slate-900 dark:text-white">Crear miembro</h2><button id="btn-close-user-modal" type="button" class="text-gray-500 hover:text-slate-900 dark:hover:text-white"><span class="material-symbols-outlined">close</span></button></div>
           <form id="form-user" class="space-y-4">
-            <div><label class="text-sm font-medium">Nombre</label><input id="user-name" class="form-input w-full rounded-lg border px-3 py-2 bg-white dark:bg-gray-800" required /></div>
-            <div><label class="text-sm font-medium">Correo</label><input id="user-email" type="email" class="form-input w-full rounded-lg border px-3 py-2 bg-white dark:bg-gray-800" required /></div>
-            <div><label class="text-sm font-medium">Contraseña</label><input id="user-password" type="password" class="form-input w-full rounded-lg border px-3 py-2 bg-white dark:bg-gray-800" required /></div>
-            <div class="grid grid-cols-2 gap-4"><div><label class="text-sm font-medium">Rol</label><select id="user-role" class="form-input w-full rounded-lg border px-3 py-2 bg-white dark:bg-gray-800"><option>Productor</option><option>Admin</option><option>Contador</option></select></div><div class="flex items-center gap-2 pt-6"><input id="user-active" type="checkbox" checked /><label for="user-active" class="text-sm">Activo</label></div></div>
-            <div class="flex justify-end gap-3 pt-2"><p id="user-form-status" class="mr-auto self-center text-sm text-slate-500 dark:text-slate-400"></p><button type="button" id="btn-cancel-user" class="px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-800">Cancelar</button><button id="user-submit" type="submit" class="px-4 py-2 rounded-lg bg-primary text-white font-bold hover:bg-primary/90">Guardar</button></div>
+            <div><label class="text-sm font-medium">Nombre</label><input id="user-name" class="surface-input w-full py-2" required /></div>
+            <div><label class="text-sm font-medium">Correo</label><input id="user-email" type="email" class="surface-input w-full py-2" required /></div>
+            <div><label class="text-sm font-medium">Contraseña</label><input id="user-password" type="password" class="surface-input w-full py-2" required /></div>
+            <div class="grid grid-cols-2 gap-4"><div><label class="text-sm font-medium">Rol en la empresa</label><select id="user-role" class="surface-input w-full py-2"><option value="manager">Gestor</option><option value="owner">Propietario</option><option value="accountant">Contador</option></select></div><div class="flex items-center gap-2 pt-6"><input id="user-active" type="checkbox" checked /><label for="user-active" class="text-sm">Activo en empresa</label></div></div>
+            <div class="flex justify-end gap-3 pt-2"><p id="user-form-status" class="mr-auto self-center text-sm text-slate-500 dark:text-slate-400"></p><button type="button" id="btn-cancel-user" class="px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 dark:text-slate-200">Cancelar</button><button id="user-submit" type="submit" class="px-4 py-2 rounded-lg bg-primary text-white font-bold hover:bg-primary/90">Guardar</button></div>
           </form>
         </div>
       </div>

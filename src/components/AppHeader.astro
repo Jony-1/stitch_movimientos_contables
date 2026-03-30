@@ -1,5 +1,5 @@
 ---
-const { name = "Usuario", role = "Productor", email = "user@demo.com" } = Astro.props;
+const { name = "Miembro", role = "Gestión", email = "usuario@stitch.local" } = Astro.props;
 ---
 
 <header class="flex h-16 min-w-0 items-center px-2 py-3">
@@ -18,6 +18,15 @@ const { name = "Usuario", role = "Productor", email = "user@demo.com" } = Astro.
       </div>
     </div>
 
+    <div class="hidden min-w-0 flex-1 md:flex">
+      <label class="flex min-w-[220px] max-w-[340px] flex-col gap-1 text-xs text-slate-500 dark:text-slate-400">
+        <span class="font-semibold uppercase tracking-[0.2em]">Empresa activa</span>
+        <select data-organization-select class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800">
+          <option value="">Cargando empresas...</option>
+        </select>
+      </label>
+    </div>
+
     <div class="app-header-controls ml-auto flex items-center gap-2 sm:gap-3">
       <button
         type="button"
@@ -32,7 +41,8 @@ const { name = "Usuario", role = "Productor", email = "user@demo.com" } = Astro.
       </button>
 
       <div class="hidden max-w-[220px] flex-col text-right sm:flex">
-        <p class="truncate text-sm font-medium text-slate-900 dark:text-slate-100">{email}</p>
+        <p class="app-header-email truncate text-sm font-medium text-slate-900 dark:text-slate-100">{email}</p>
+        <p data-active-organization-name class="truncate text-xs text-slate-500 dark:text-slate-400">Sin empresa activa</p>
         <p class="text-xs text-slate-500 dark:text-slate-400">Sesión activa</p>
       </div>
       <a href="/logout" data-logout-link class="app-logout-link rounded-full bg-red-50 px-4 py-2 text-sm font-semibold text-red-600 transition-colors hover:bg-red-100 dark:bg-red-950/40 dark:text-red-300 dark:hover:bg-red-950/70">Cerrar sesión</a>

@@ -13,6 +13,10 @@ function resolveApiBase() {
 const API_BASE = resolveApiBase();
 let csrfTokenPromise = null;
 
+function toApiUrl(path) {
+  return `${API_BASE}${path}`;
+}
+
 async function readJson(response) {
   const text = await response.text();
   let data = null;
@@ -38,7 +42,7 @@ async function apiFetch(path, options = {}) {
     if (csrfToken) headers.set("X-CSRF-Token", csrfToken);
   }
 
-  const response = await fetch(`${API_BASE}${path}`, {
+  const response = await fetch(toApiUrl(path), {
     ...options,
     credentials: "include",
     headers,
@@ -51,9 +55,8 @@ async function apiFetch(path, options = {}) {
       const freshToken = await getCsrfToken();
       if (freshToken) {
         headers.set("X-CSRF-Token", freshToken);
-        return fetch(`${API_BASE}${path}`, {
+        return fetch(toApiUrl(path), {
           ...options,
-          _csrfRetry: true,
           credentials: "include",
           headers,
         });
@@ -66,7 +69,7 @@ async function apiFetch(path, options = {}) {
 
 async function getCsrfToken() {
   if (!csrfTokenPromise) {
-    csrfTokenPromise = fetch(`${API_BASE}/api/csrf`, { credentials: "include" })
+    csrfTokenPromise = fetch(toApiUrl("/api/csrf"), { credentials: "include" })
       .then(async (response) => {
         const data = await readJson(response);
         return data?.csrfToken || "";
@@ -102,4 +105,4 @@ function formatDate(value) {
   });
 }
 
-export { API_BASE, apiFetch, apiJson, formatDate, formatMoney, readJson, resetCsrfTokenCache };
+export { API_BASE, apiFetch, apiJson, formatDate, formatMoney, readJson, resetCsrfTokenCache, toApiUrl };

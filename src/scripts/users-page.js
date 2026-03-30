@@ -22,15 +22,16 @@ function setPasswordState(required, placeholder = "") {
 function resetUserForm(form) {
   if (!form) return;
   form.reset();
-  const { active } = getUserFormElements();
+  const { active, role } = getUserFormElements();
   if (active) active.checked = true;
+  if (role) role.value = "manager";
   setPasswordState(true, "");
 }
 
 async function renderUsers(container, currentUser) {
   const status = document.getElementById("users-status");
-  if (status) status.textContent = "Cargando usuarios...";
-    container.innerHTML = `<div class="surface-card p-6 text-sm text-slate-500 dark:text-slate-400">Cargando usuarios...</div>`;
+  if (status) status.textContent = "Cargando miembros...";
+    container.innerHTML = `<div class="surface-card p-6 text-sm text-slate-500 dark:text-slate-400">Cargando miembros...</div>`;
 
   try {
     const rawRows = await apiJson("/api/users");
@@ -56,7 +57,7 @@ async function renderUsers(container, currentUser) {
                   <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                     <td data-label="Nombre" class="px-4 py-3 text-sm font-medium text-slate-900 dark:text-white">${u.name || ""}</td>
                     <td data-label="Correo" class="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">${u.email || ""}</td>
-                    <td data-label="Rol" class="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">${u.role || ""}</td>
+                    <td data-label="Rol" class="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">${u.role || u.organizationRole || ""}</td>
                     <td data-label="Estado" class="px-4 py-3 text-sm">
                       <span class="inline-flex items-center gap-2 rounded-full px-2.5 py-0.5 text-xs font-semibold ${u.active ?"bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300" : "bg-gray-100 text-slate-700 dark:bg-gray-800 dark:text-gray-300"}">
                         <span class="size-2 rounded-full ${u.active ?"bg-emerald-500" : "bg-gray-400"}"></span>
@@ -75,9 +76,9 @@ async function renderUsers(container, currentUser) {
         </table>
         </div>
       </div>`
-    : `<div class="surface-card p-6 text-sm text-slate-500 dark:text-slate-400">No hay usuarios.</div>`;
+    : `<div class="surface-card p-6 text-sm text-slate-500 dark:text-slate-400">No hay miembros en esta empresa.</div>`;
 
-    if (status) status.textContent = (rows?.length ?? 0) ? `${rows?.length ?? 0} usuario(s) cargado(s).` : "No hay usuarios registrados.";
+    if (status) status.textContent = (rows?.length ?? 0) ? `${rows?.length ?? 0} miembro(s) cargado(s).` : "No hay miembros registrados en esta empresa.";
 
     container.querySelectorAll(".btn-user-edit").forEach((button) => {
       button.addEventListener("click", async () => {
@@ -89,11 +90,11 @@ async function renderUsers(container, currentUser) {
         if (!modal || !form) return;
         modal.dataset.editingId = String(id);
         const heading = modal.querySelector("h2, h3");
-        if (heading) heading.textContent = "Editar usuario";
+        if (heading) heading.textContent = "Editar miembro";
         const { name, email, role, active } = getUserFormElements();
         if (name) name.value = u.name || "";
         if (email) email.value = u.email || "";
-        if (role) role.value = u.role || "Productor";
+        if (role) role.value = u.organizationRole || (String(u.role || "").toLowerCase() === "admin" ? "owner" : String(u.role || "").toLowerCase() === "contador" ? "accountant" : "manager");
         if (active) active.checked = !!u.active;
         const { password } = getUserFormElements();
         if (password) password.value = "";
@@ -105,7 +106,7 @@ async function renderUsers(container, currentUser) {
 
     container.querySelectorAll(".btn-user-del").forEach((button) => {
       button.addEventListener("click", async () => {
-        if (!confirm("Eliminar usuario?")) return;
+        if (!confirm("Quitar miembro de la empresa activa?")) return;
         await apiFetch(`/api/users/${button.dataset.id}`, { method: "DELETE" });
         if (currentUser && Number(button.dataset.id) === currentUser.id) {
           window.location.href = "/login";
@@ -115,8 +116,8 @@ async function renderUsers(container, currentUser) {
       });
     });
   } catch (error) {
-    container.innerHTML = `<div class="surface-card p-6 text-sm text-red-600">${error.message || "No se pudieron cargar los usuarios."}</div>`;
-    if (status) status.textContent = error.message || "No se pudieron cargar los usuarios.";
+    container.innerHTML = `<div class="surface-card p-6 text-sm text-red-600">${error.message || "No se pudieron cargar los miembros."}</div>`;
+    if (status) status.textContent = error.message || "No se pudieron cargar los miembros.";
   }
 }
 
@@ -141,7 +142,7 @@ async function initUsersPage() {
     modal.classList.remove("opacity-0", "pointer-events-none");
     modal.classList.add("opacity-100", "pointer-events-auto");
     const heading = modal.querySelector("h2, h3");
-    if (heading) heading.textContent = "Crear usuario";
+    if (heading) heading.textContent = "Crear miembro";
     if (formStatus) formStatus.textContent = "";
     delete modal.dataset.editingId;
   };
@@ -164,7 +165,7 @@ async function initUsersPage() {
     const payload = {
       name: name?.value || "",
       email: email?.value || "",
-      role: role?.value || "Productor",
+      role: role?.value || "manager",
       active: !!active?.checked,
     };
 
@@ -175,7 +176,7 @@ async function initUsersPage() {
       submitBtn.disabled = true;
       submitBtn.classList.add("opacity-70");
     }
-    if (formStatus) formStatus.textContent = editingId ? "Actualizando usuario..." : "Guardando usuario...";
+    if (formStatus) formStatus.textContent = editingId ? "Actualizando miembro..." : "Guardando miembro...";
 
     try {
       await apiFetch(editingId ? `/api/users/${editingId}` : "/api/users", {

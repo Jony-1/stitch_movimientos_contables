@@ -2,7 +2,7 @@
 import AppLayout from "../layouts/AppLayout.astro";
 ---
 
-<AppLayout title="Dashboard" active="dashboard" name="Usuario" role="Productor" email="user@demo.com">
+<AppLayout title="Dashboard" active="dashboard" name="Miembro" role="Gestión" email="usuario@stitch.local">
   <div class="mx-auto flex max-w-7xl flex-col gap-6">
     <section class="surface-card rounded-3xl p-6 sm:p-8">
       <div class="flex flex-wrap items-end justify-between gap-4">
@@ -10,6 +10,7 @@ import AppLayout from "../layouts/AppLayout.astro";
           <p class="text-xs uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">Resumen general</p>
           <h1 class="text-4xl font-black text-slate-900 dark:text-white">Hola, <span id="dashboard-user-name">Usuario</span></h1>
           <p class="text-slate-500 dark:text-slate-400">Este es el estado actual de tus movimientos y tu balance.</p>
+          <p id="dashboard-active-organization" class="mt-2 text-sm font-semibold text-primary dark:text-primary/90"></p>
           <p id="dashboard-status" class="mt-2 text-sm text-slate-500 dark:text-slate-400"></p>
         </div>
         <a id="dashboard-primary-action" href="/movimientos" class="inline-flex min-w-[160px] items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-primary/90">
@@ -17,6 +18,64 @@ import AppLayout from "../layouts/AppLayout.astro";
           <span>Nuevo movimiento</span>
         </a>
       </div>
+    </section>
+
+    <section class="grid grid-cols-1 gap-6 xl:grid-cols-5">
+      <article class="surface-card p-6 xl:col-span-3">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p class="text-xs uppercase tracking-[0.25em] text-slate-500 dark:text-slate-400">Índice financiero</p>
+            <h2 class="mt-2 text-3xl font-black text-slate-900 dark:text-white"><span id="dashboard-copilot-score">0</span>/100</h2>
+            <p id="dashboard-copilot-label" class="mt-2 inline-flex rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200">Cargando…</p>
+            <p id="dashboard-copilot-summary" class="mt-4 max-w-2xl text-sm text-slate-600 dark:text-slate-300">Calculando diagnóstico financiero de la empresa activa...</p>
+          </div>
+          <div class="grid min-w-[220px] gap-3 rounded-2xl bg-slate-50 p-4 dark:bg-slate-900/50">
+            <div>
+              <p class="text-xs uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Caja 30 días</p>
+              <p id="dashboard-forecast-balance" class="mt-1 text-2xl font-black text-slate-900 dark:text-white">$0</p>
+            </div>
+            <div>
+              <p class="text-xs uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Pendiente por cobrar</p>
+              <p id="dashboard-pending-invoices" class="mt-1 text-lg font-bold text-amber-600">$0</p>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="surface-card p-6 xl:col-span-2">
+        <div class="flex items-center justify-between gap-3">
+          <div>
+            <h2 class="text-lg font-bold text-slate-900 dark:text-white">Alertas</h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400">Qué necesita atención hoy.</p>
+          </div>
+        </div>
+        <div id="dashboard-copilot-alerts" class="mt-4 grid gap-3"></div>
+      </article>
+    </section>
+
+    <section id="dashboard-portfolio-section" class="hidden surface-card p-6">
+      <div class="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p class="text-xs uppercase tracking-[0.25em] text-slate-500 dark:text-slate-400">Comparativo multiempresa</p>
+          <h2 class="mt-2 text-2xl font-black text-slate-900 dark:text-white">Portafolio consolidado</h2>
+          <p id="dashboard-portfolio-summary" class="mt-3 text-sm leading-7 text-slate-600 dark:text-slate-300"></p>
+        </div>
+        <div class="grid grid-cols-3 gap-3 text-center">
+          <div class="rounded-2xl bg-emerald-50 px-4 py-3 dark:bg-emerald-950/20">
+            <p class="text-xs uppercase tracking-[0.2em] text-emerald-700 dark:text-emerald-300">Verdes</p>
+            <p id="dashboard-portfolio-green" class="mt-2 text-2xl font-black text-emerald-700 dark:text-emerald-300">0</p>
+          </div>
+          <div class="rounded-2xl bg-amber-50 px-4 py-3 dark:bg-amber-950/20">
+            <p class="text-xs uppercase tracking-[0.2em] text-amber-700 dark:text-amber-300">Atención</p>
+            <p id="dashboard-portfolio-warning" class="mt-2 text-2xl font-black text-amber-700 dark:text-amber-300">0</p>
+          </div>
+          <div class="rounded-2xl bg-rose-50 px-4 py-3 dark:bg-rose-950/20">
+            <p class="text-xs uppercase tracking-[0.2em] text-rose-700 dark:text-rose-300">Riesgo</p>
+            <p id="dashboard-portfolio-risk" class="mt-2 text-2xl font-black text-rose-700 dark:text-rose-300">0</p>
+          </div>
+        </div>
+      </div>
+      <div id="dashboard-portfolio-ranking" class="mt-6 grid gap-3"></div>
     </section>
 
     <section class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">

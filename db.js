@@ -87,30 +87,25 @@ async function rebuildPoolWithoutSsl() {
   pool = createPool(false);
 }
 
-async function query(text, params) {
+async function withSslFallback(executor) {
   try {
-    return await pool.query(text, params);
+    return await executor(pool);
   } catch (error) {
     if (!shouldRetryWithoutSsl(error, currentSsl)) {
       throw error;
     }
 
     await rebuildPoolWithoutSsl();
-    return pool.query(text, params);
+    return executor(pool);
   }
 }
 
-async function connect() {
-  try {
-    return await pool.connect();
-  } catch (error) {
-    if (!shouldRetryWithoutSsl(error, currentSsl)) {
-      throw error;
-    }
+async function query(text, params) {
+  return withSslFallback((activePool) => activePool.query(text, params));
+}
 
-    await rebuildPoolWithoutSsl();
-    return pool.connect();
-  }
+async function connect() {
+  return withSslFallback((activePool) => activePool.connect());
 }
 
 module.exports = { query, connect, end: () => pool.end() };

@@ -117,7 +117,7 @@ table td:last-child {
 
 .dark table th:last-child,
 .dark table td:last-child {
-  background-color: rgb(17, 24, 39);
+  background-color: rgb(15, 23, 42);
 }
 
 table thead th:last-child {
@@ -204,7 +204,7 @@ table td:nth-child(6) {
   
   .dark table tr {
     border-color: rgb(55, 65, 81);
-    background-color: rgb(17, 24, 39);
+    background-color: rgb(15, 23, 42);
   }
   
   table td {

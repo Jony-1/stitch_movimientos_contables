@@ -2,18 +2,19 @@
 import AppLayout from "../layouts/AppLayout.astro";
 ---
 
-<AppLayout title="Configuración" active="configuraciones" name="Admin" role="Administrador" email="admin@demo.com">
+<AppLayout title="Configuración" active="configuraciones" name="Administrador" role="Administración" email="equipo@stitch.local">
   <div class="mx-auto flex max-w-4xl flex-col gap-6">
-    <header class="surface-card shadow-[0_18px_40px_rgba(15,23,42,0.08)] backdrop-blur-xl rounded-3xl p-6">
+    <header class="surface-card rounded-3xl p-6">
       <p class="text-xs uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">Sistema</p>
       <h1 class="text-4xl font-black leading-tight text-slate-900 dark:text-white">Configuración</h1>
+      <p class="mt-2 text-sm font-semibold text-primary dark:text-primary/90">Ajustes de la empresa activa y su equipo.</p>
     </header>
 
     <div class="flex flex-col gap-10">
-      <section class="surface-card shadow-[0_18px_40px_rgba(15,23,42,0.08)] backdrop-blur-xl p-6">
-        <h3 class="mb-6 text-lg font-bold leading-tight tracking-[-0.015em] text-slate-900 dark:text-white">Datos de la unidad productiva</h3>
+      <section class="surface-card p-6">
+        <h3 class="mb-6 text-lg font-bold leading-tight tracking-[-0.015em] text-slate-900 dark:text-white">Datos de la empresa agricola</h3>
         <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <label class="flex flex-col"><p class="pb-2 text-sm font-medium leading-normal text-slate-800 dark:text-gray-200">Nombre del productor / finca</p><input class="form-input flex h-12 w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg border border-gray-300 bg-white px-4 text-base font-normal leading-normal text-gray-900 focus:border-primary focus:outline-0 focus:ring-2 focus:ring-primary/50 dark:border-gray-700 dark:bg-gray-800 dark:text-white" value="Familia Pérez Rojas" /></label>
+          <label class="flex flex-col"><p class="pb-2 text-sm font-medium leading-normal text-slate-800 dark:text-gray-200">Nombre comercial</p><input class="form-input flex h-12 w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg border border-gray-300 bg-white px-4 text-base font-normal leading-normal text-gray-900 focus:border-primary focus:outline-0 focus:ring-2 focus:ring-primary/50 dark:border-gray-700 dark:bg-gray-800 dark:text-white" value="Agro Norte SAS" /></label>
           <label class="flex flex-col"><p class="pb-2 text-sm font-medium leading-normal text-slate-800 dark:text-gray-200">Identificación (C.C. / NIT)</p><input class="form-input flex h-12 w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg border border-gray-300 bg-white px-4 text-base font-normal leading-normal text-gray-900 focus:border-primary focus:outline-0 focus:ring-2 focus:ring-primary/50 dark:border-gray-700 dark:bg-gray-800 dark:text-white" value="1.234.567.890" /></label>
           <label class="flex flex-col"><p class="pb-2 text-sm font-medium leading-normal text-slate-800 dark:text-gray-200">Moneda</p><input class="form-input cursor-not-allowed flex h-12 w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg border border-gray-300 bg-gray-100 px-4 text-base font-normal leading-normal text-gray-500 focus:outline-0 focus:ring-0 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400" disabled value="Peso Colombiano (COP)" /></label>
         </div>
@@ -23,14 +24,14 @@ import AppLayout from "../layouts/AppLayout.astro";
         </div>
       </section>
 
-      <section id="users-section" class="surface-card shadow-[0_18px_40px_rgba(15,23,42,0.08)] backdrop-blur-xl p-6">
+      <section id="users-section" class="surface-card p-6">
         <div class="mb-2 flex items-start justify-between">
           <div>
-            <h3 class="text-lg font-bold leading-tight tracking-[-0.015em] text-slate-900 dark:text-white">Gestión de Usuarios</h3>
-            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">Aquí puedes crear, editar o eliminar usuarios del sistema.</p>
+            <h3 class="text-lg font-bold leading-tight tracking-[-0.015em] text-slate-900 dark:text-white">Equipo de la empresa</h3>
+            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">Invita y administra miembros de la empresa activa con roles operativos.</p>
             <p id="users-status" class="mt-2 text-sm text-gray-500 dark:text-gray-400"></p>
           </div>
-          <button id="btn-new-user" type="button" class="flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-primary bg-primary/10 px-4 py-2 text-center text-sm font-semibold text-primary transition-all duration-300 ease-in-out hover:bg-primary/20 dark:bg-primary/20 dark:text-primary-300"><span class="material-symbols-outlined text-lg">add</span><span>Nuevo Usuario</span></button>
+          <button id="btn-new-user" type="button" class="flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-primary bg-primary/10 px-4 py-2 text-center text-sm font-semibold text-primary transition-all duration-300 ease-in-out hover:bg-primary/20 dark:bg-primary/20 dark:text-sky-300"><span class="material-symbols-outlined text-lg">add</span><span>Nuevo Usuario</span></button>
         </div>
         <div id="users-management" class="mt-4">
           <div id="users-requests" class="mb-6"></div>
@@ -38,13 +39,13 @@ import AppLayout from "../layouts/AppLayout.astro";
         </div>
       </section>
 
-      <section class="surface-card shadow-[0_18px_40px_rgba(15,23,42,0.08)] backdrop-blur-xl p-6">
+      <section class="surface-card p-6">
         <div class="mb-2 flex items-start justify-between">
           <div>
             <h3 class="text-lg font-bold leading-tight tracking-[-0.015em] text-slate-900 dark:text-white">Categorías de Ingresos y Gastos</h3>
             <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">Organiza los movimientos de tu cultivo.</p>
           </div>
-          <button class="flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-primary bg-primary/10 px-4 py-2 text-center text-sm font-semibold text-primary transition-all duration-300 ease-in-out hover:bg-primary/20 dark:bg-primary/20 dark:text-primary-300" type="button"><span class="material-symbols-outlined text-lg">add</span><span>Nueva Categoría</span></button>
+          <button class="flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-primary bg-primary/10 px-4 py-2 text-center text-sm font-semibold text-primary transition-all duration-300 ease-in-out hover:bg-primary/20 dark:bg-primary/20 dark:text-sky-300" type="button"><span class="material-symbols-outlined text-lg">add</span><span>Nueva Categoría</span></button>
         </div>
         <div class="mt-6 flow-root">
           <ul class="divide-y divide-slate-200 dark:divide-slate-800" role="list">
@@ -63,15 +64,15 @@ import AppLayout from "../layouts/AppLayout.astro";
     <div id="modal-user" aria-hidden="true" class="fixed inset-0 z-50 flex items-center justify-center pointer-events-none opacity-0 transition-opacity">
       <div class="absolute inset-0 bg-black/40"></div>
       <div class="relative w-full max-w-xl p-4">
-        <div class="surface-card shadow-[0_18px_40px_rgba(15,23,42,0.08)] backdrop-blur-xl transform rounded-xl border-gray-200 p-6 shadow-lg transition-transform dark:border-gray-800 dark:bg-gray-900">
-          <h3 class="mb-4 text-lg font-bold text-slate-900 dark:text-white">Nuevo usuario</h3>
+        <div class="surface-card transform rounded-xl border-gray-200 p-6 transition-transform dark:border-gray-800">
+          <h3 class="mb-4 text-lg font-bold text-slate-900 dark:text-white">Nuevo miembro</h3>
           <form id="form-user" class="space-y-4">
-            <div><label class="text-sm font-medium">Nombre</label><input id="user-name" class="form-input w-full rounded-lg border px-3 py-2" required /></div>
-            <div><label class="text-sm font-medium">Correo</label><input id="user-email" type="email" class="form-input w-full rounded-lg border px-3 py-2" required /></div>
-            <div><label class="text-sm font-medium">Contraseña</label><input id="user-password" type="password" class="form-input w-full rounded-lg border px-3 py-2" required /></div>
-            <div><label class="text-sm font-medium">Rol</label><select id="user-role" class="form-input w-full rounded-lg border px-3 py-2"><option>Productor</option><option>Admin</option><option>Contador</option></select></div>
+            <div><label class="text-sm font-medium">Nombre</label><input id="user-name" class="surface-input w-full py-2" required /></div>
+            <div><label class="text-sm font-medium">Correo</label><input id="user-email" type="email" class="surface-input w-full py-2" required /></div>
+            <div><label class="text-sm font-medium">Contraseña</label><input id="user-password" type="password" class="surface-input w-full py-2" required /></div>
+            <div><label class="text-sm font-medium">Rol en la empresa</label><select id="user-role" class="surface-input w-full py-2"><option value="manager">Gestor</option><option value="owner">Propietario</option><option value="accountant">Contador</option></select></div>
             <div class="flex items-center gap-4"><label class="inline-flex items-center gap-2"><input id="user-active" type="checkbox" checked /> Activo</label></div>
-            <div class="flex justify-end gap-3 pt-2"><p id="user-form-status" class="mr-auto self-center text-sm text-slate-500 dark:text-slate-400"></p><button id="user-cancel" type="button" class="px-4 py-2 rounded-lg bg-gray-100">Cancelar</button><button id="user-save" type="submit" class="px-4 py-2 rounded-lg bg-primary text-white">Guardar</button></div>
+            <div class="flex justify-end gap-3 pt-2"><p id="user-form-status" class="mr-auto self-center text-sm text-slate-500 dark:text-slate-400"></p><button id="user-cancel" type="button" class="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 dark:text-gray-200">Cancelar</button><button id="user-save" type="submit" class="px-4 py-2 rounded-lg bg-primary text-white font-bold hover:bg-primary/90">Guardar</button></div>
           </form>
         </div>
       </div>
