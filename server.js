@@ -42,14 +42,14 @@ app.use(express.urlencoded({ extended: true })); // para POST del login form
 
 // sesión en memoria (ok para dev)
 app.use(
-    session({
-      secret: process.env.SESSION_SECRET || "keyboard cat",
-      resave: false,
-      saveUninitialized: false,
-      proxy: isProduction,
-      cookie: { maxAge: 1000 * 60 * 60, sameSite: "lax", httpOnly: true, secure: isProduction ? "auto" : false }, // 1h
-    })
-  );
+  session({
+    secret: process.env.SESSION_SECRET || "keyboard cat",
+    resave: false,
+    saveUninitialized: false,
+    proxy: isProduction,
+    cookie: { maxAge: 1000 * 60 * 60, sameSite: "lax", httpOnly: true, secure: isProduction ? "auto" : false }, // 1h
+  })
+);
 
 app.use(attachCsrfContext);
 
@@ -83,6 +83,37 @@ function buildSessionUser(user) {
   };
 }
 
+function getSessionCookieOptions() {
+  return {
+    path: "/",
+    sameSite: "lax",
+    httpOnly: true,
+    secure: isProduction ? "auto" : false,
+  };
+}
+
+function clearSessionCookie(res) {
+  res.clearCookie("connect.sid", getSessionCookieOptions());
+}
+
+function persistSessionUser(req, user) {
+  return new Promise((resolve, reject) => {
+    if (!req.session) {
+      reject(new Error("Sesión no disponible"));
+      return;
+    }
+
+    req.session.user = buildSessionUser(user);
+    req.session.save((err) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      resolve(req.session.user);
+    });
+  });
+}
+
 function parseIdParam(value) {
   const id = parseInt(value, 10);
   return Number.isNaN(id) ? null : id;
@@ -94,6 +125,22 @@ function isNonEmptyString(value) {
 
 function normalizeEmail(email) {
   return String(email || "").trim().toLowerCase();
+}
+
+function looksLikeBcryptHash(value) {
+  return /^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/.test(String(value || ""));
+}
+
+async function safeComparePassword(rawPassword, hashedPassword) {
+  if (!looksLikeBcryptHash(hashedPassword)) {
+    return false;
+  }
+
+  try {
+    return await bcrypt.compare(rawPassword, hashedPassword);
+  } catch (_) {
+    return false;
+  }
 }
 
 function isValidAmount(value) {
@@ -482,14 +529,12 @@ app.post("/login", async (req, res) => {
       return res.redirect("/login?error=" + encodeURIComponent("Credenciales inválidas"));
     }
 
-    const match = await bcrypt.compare(password, user.password);
+    const match = await safeComparePassword(password, user.password);
     if (!match) {
       return res.redirect("/login?error=" + encodeURIComponent("Credenciales inválidas"));
     }
 
-    // Guardar sesión
-    req.session.user = buildSessionUser(user);
-
+    await persistSessionUser(req, user);
     return res.redirect("/dashboard");
   } catch (err) {
     console.error("Error POST /login", err);
@@ -525,13 +570,13 @@ app.post("/api/login", async (req, res) => {
       return res.status(401).json({ error: "Credenciales inválidas" });
     }
 
-    const match = await bcrypt.compare(password, user.password);
+    const match = await safeComparePassword(password, user.password);
     if (!match) {
       return res.status(401).json({ error: "Credenciales inválidas" });
     }
 
-    req.session.user = buildSessionUser(user);
-    return res.json(req.session.user);
+    const sessionUser = await persistSessionUser(req, user);
+    return res.json(sessionUser);
   } catch (err) {
     console.error("Error POST /api/login", err);
     return res.status(500).json({ error: "Error interno" });
@@ -560,8 +605,7 @@ app.post("/api/register", async (req, res) => {
       [normalizedEmail, name.trim(), hash]
     );
 
-    req.session.user = buildSessionUser(result.rows[0]);
-
+    await persistSessionUser(req, result.rows[0]);
     return res.status(201).json(result.rows[0]);
   } catch (err) {
     console.error("Error POST /api/register", err);
@@ -575,7 +619,7 @@ app.post("/logout", (req, res) => {
     if (err) {
       console.error("Error POST /logout", err);
     }
-    res.clearCookie("connect.sid", { path: "/" });
+    clearSessionCookie(res);
     return res.redirect("/login");
   });
 });
@@ -589,7 +633,7 @@ app.get("/logout", (req, res) => {
     if (err) {
       console.error("Error GET /logout", err);
     }
-    res.clearCookie("connect.sid", { path: "/" });
+    clearSessionCookie(res);
     return res.redirect("/login");
   });
 });
@@ -600,7 +644,7 @@ app.post("/api/logout", (req, res) => {
       console.error("Error POST /api/logout", err);
       return res.status(500).json({ error: "No se pudo cerrar sesión" });
     }
-    res.clearCookie("connect.sid", { path: "/" });
+    clearSessionCookie(res);
     return res.status(204).send();
   });
 });
@@ -734,12 +778,12 @@ app.put("/api/users/:id", ensureAdminApi, async (req, res) => {
           if (err) {
             console.error("Error destroying session after user deactivation", err);
           }
-          res.clearCookie("connect.sid", { path: "/" });
+          clearSessionCookie(res);
           return res.json(updatedUser);
         });
       }
 
-      req.session.user = buildSessionUser(updatedUser);
+      await persistSessionUser(req, updatedUser);
     }
 
     return res.json(updatedUser);
@@ -769,7 +813,7 @@ app.delete("/api/users/:id", ensureAdminApi, async (req, res) => {
         if (err) {
           console.error("Error destroying session after self-delete", err);
         }
-        res.clearCookie("connect.sid", { path: "/" });
+        clearSessionCookie(res);
         return res.status(204).send();
       });
     }
@@ -1895,14 +1939,23 @@ async function initDb() {
     }
   } catch (err) {
     console.error("Error inicializando base de datos:", err);
+    throw err;
   }
 }
-
-initDb();
 
 // =======================
 // Start server
 // =======================
-app.listen(PORT, () => {
-  console.log(`Servidor escuchando en puerto ${PORT}`);
-});
+async function startServer() {
+  try {
+    await initDb();
+    app.listen(PORT, () => {
+      console.log(`Servidor escuchando en puerto ${PORT}`);
+    });
+  } catch (err) {
+    console.error("No se pudo iniciar la aplicación:", err);
+    process.exit(1);
+  }
+}
+
+startServer();
