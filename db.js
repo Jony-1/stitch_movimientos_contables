@@ -5,6 +5,30 @@ const { URL } = require("url");
 const connectionString = process.env.DATABASE_URL;
 const sslMode = String(process.env.DATABASE_SSL || "").trim().toLowerCase();
 
+function buildConnectionString(ssl) {
+  if (!connectionString || ssl !== false) {
+    return connectionString;
+  }
+
+  try {
+    const parsed = new URL(connectionString);
+    parsed.searchParams.delete("sslmode");
+    parsed.searchParams.delete("ssl");
+    parsed.searchParams.delete("sslcert");
+    parsed.searchParams.delete("sslkey");
+    parsed.searchParams.delete("sslrootcert");
+    return parsed.toString();
+  } catch (_) {
+    return connectionString
+      .replace(/([?&])sslmode=[^&]*&?/i, "$1")
+      .replace(/([?&])ssl=[^&]*&?/i, "$1")
+      .replace(/([?&])sslcert=[^&]*&?/i, "$1")
+      .replace(/([?&])sslkey=[^&]*&?/i, "$1")
+      .replace(/([?&])sslrootcert=[^&]*&?/i, "$1")
+      .replace(/[?&]$/, "");
+  }
+}
+
 function getDatabaseHostname() {
   try {
     return new URL(String(connectionString || "")).hostname || "";
@@ -43,7 +67,7 @@ function resolveSslConfig() {
 
 function createPool(ssl) {
   return new Pool({
-    connectionString,
+    connectionString: buildConnectionString(ssl),
     ssl,
   });
 }
