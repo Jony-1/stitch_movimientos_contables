@@ -1863,6 +1863,7 @@ async function initDb() {
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS password TEXT`);
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT NOT NULL DEFAULT 'Productor'`);
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS active BOOLEAN NOT NULL DEFAULT true`);
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT now()`);
 
     await pool.query(`ALTER TABLE movements ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'Registrado'`);
     await pool.query(`ALTER TABLE movements ADD COLUMN IF NOT EXISTS source TEXT NOT NULL DEFAULT 'manual'`);
