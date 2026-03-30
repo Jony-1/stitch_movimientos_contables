@@ -27,6 +27,10 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const isProduction = process.env.NODE_ENV === "production";
 
+if (isProduction) {
+  app.set("trust proxy", 1);
+}
+
 // =======================
 // Middlewares
 // =======================
@@ -42,7 +46,8 @@ app.use(
       secret: process.env.SESSION_SECRET || "keyboard cat",
       resave: false,
       saveUninitialized: false,
-      cookie: { maxAge: 1000 * 60 * 60, sameSite: "lax", httpOnly: true, secure: isProduction }, // 1h
+      proxy: isProduction,
+      cookie: { maxAge: 1000 * 60 * 60, sameSite: "lax", httpOnly: true, secure: isProduction ? "auto" : false }, // 1h
     })
   );
 
