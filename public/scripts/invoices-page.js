@@ -1,5 +1,5 @@
 import { apiFetch, apiJson, formatDate, formatMoney } from "./api.js";
-import { protectPage } from "./auth.js";
+import { canWriteAccounting, protectPage } from "./auth.js";
 
 const INVOICE_STATUS_META = {
   pending: {
@@ -78,6 +78,85 @@ function setModalTitle(modal, value) {
 
 function getPrintableStatusLabel(value) {
   return getStatusMeta(value).label;
+}
+
+function isPaidStatus(value) {
+  return normalizeInvoiceStatus(value) === "pagada";
+}
+
+function createHiddenPrintFrame(html) {
+  const iframe = document.createElement("iframe");
+  iframe.setAttribute("aria-hidden", "true");
+  iframe.style.position = "fixed";
+  iframe.style.right = "0";
+  iframe.style.bottom = "0";
+  iframe.style.width = "0";
+  iframe.style.height = "0";
+  iframe.style.border = "0";
+  iframe.style.visibility = "hidden";
+  iframe.srcdoc = html;
+  return iframe;
+}
+
+function openActionDialog(modal, options = {}) {
+  const titleNode = modal?.querySelector("#invoice-action-title");
+  const messageNode = modal?.querySelector("#invoice-action-message");
+  const confirmBtn = modal?.querySelector("#invoice-action-confirm");
+  if (!modal || !titleNode || !messageNode || !confirmBtn) {
+    return Promise.resolve(false);
+  }
+
+  const { title = "Confirmar acción", message = "", confirmLabel = "Aceptar", confirmTone = "danger" } = options;
+  let resolved = false;
+  let cleanup = () => {};
+  const previouslyFocusedElement = document.activeElement;
+
+  return new Promise((resolve) => {
+    const finish = (value) => {
+      if (resolved) return;
+      resolved = true;
+      cleanup();
+      if (previouslyFocusedElement instanceof HTMLElement && previouslyFocusedElement.isConnected) {
+        previouslyFocusedElement.focus({ preventScroll: true });
+      }
+      modal.classList.add("opacity-0", "pointer-events-none");
+      modal.setAttribute("aria-hidden", "true");
+      resolve(value);
+    };
+
+    const confirmHandler = () => finish(true);
+    const cancelHandler = () => finish(false);
+    const backdropHandler = (event) => {
+      if (event.target === modal || event.target.closest("[data-invoice-action-close]")) finish(false);
+    };
+    const keyHandler = (event) => {
+      if (event.key === "Escape") finish(false);
+    };
+
+    cleanup = () => {
+      confirmBtn.removeEventListener("click", confirmHandler);
+      modal.removeEventListener("click", backdropHandler);
+      document.removeEventListener("keydown", keyHandler);
+      const cancelBtn = modal.querySelector("#invoice-action-cancel");
+      if (cancelBtn) cancelBtn.removeEventListener("click", cancelHandler);
+    };
+
+    titleNode.textContent = title;
+    messageNode.textContent = message;
+    confirmBtn.textContent = confirmLabel;
+    confirmBtn.className = confirmTone === "danger"
+      ? "rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700"
+      : "rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700";
+
+    const cancelBtn = modal.querySelector("#invoice-action-cancel");
+    if (cancelBtn) cancelBtn.addEventListener("click", cancelHandler, { once: true });
+    confirmBtn.addEventListener("click", confirmHandler, { once: true });
+    modal.addEventListener("click", backdropHandler);
+    document.addEventListener("keydown", keyHandler);
+
+    modal.classList.remove("opacity-0", "pointer-events-none");
+    modal.setAttribute("aria-hidden", "false");
+  });
 }
 
 function buildInvoicePrintHtml(inv) {
@@ -164,21 +243,39 @@ function buildInvoicePrintHtml(inv) {
           </div>
         </div>
       </div>
-      <script>window.onload = () => { window.print(); window.onafterprint = () => window.close(); };</script>
     </body>
   </html>`;
 }
 
 function openInvoicePrintPreview(inv) {
-  if (!inv) return;
-  const preview = window.open("", "_blank", "noopener,noreferrer,width=1100,height=900");
-  if (!preview) {
-    alert("No se pudo abrir la vista de impresión.");
-    return;
-  }
-  preview.document.open();
-  preview.document.write(buildInvoicePrintHtml(inv));
-  preview.document.close();
+  if (!inv) return false;
+  const iframe = createHiddenPrintFrame(buildInvoicePrintHtml(inv));
+  const cleanup = () => {
+    setTimeout(() => {
+      if (iframe.parentNode) iframe.remove();
+    }, 1000);
+  };
+
+  iframe.addEventListener("load", () => {
+    const frameWindow = iframe.contentWindow;
+    if (!frameWindow || typeof frameWindow.print !== "function") {
+      cleanup();
+      return;
+    }
+
+    try {
+      frameWindow.focus();
+      frameWindow.print();
+      frameWindow.onafterprint = cleanup;
+      cleanup();
+    } catch (_) {
+      cleanup();
+    }
+  }, { once: true });
+
+  document.body.appendChild(iframe);
+
+  return true;
 }
 
 function toInputDate(value) {
@@ -189,25 +286,25 @@ function toInputDate(value) {
 function createInvoiceItemRow(item = {}) {
   const row = document.createElement("div");
   row.dataset.invoiceItemRow = "true";
-  row.className = "grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900/40 md:grid-cols-[minmax(0,2fr)_120px_140px_120px_auto] md:items-end";
+  row.className = "grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900/40 lg:grid-cols-[minmax(0,2fr)_110px_140px_120px_auto] lg:items-end";
   row.innerHTML = `
-    <label class="flex flex-col gap-1">
+    <label class="flex min-w-0 flex-col gap-1">
       <span class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Descripción</span>
-      <input data-item-field="description" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/30 dark:border-slate-700 dark:bg-slate-900 dark:text-white" placeholder="Papa pastusa, transporte..." value="${escapeHtml(item.description || "")}">
+      <input data-item-field="description" class="w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/30 dark:border-slate-700 dark:bg-slate-900 dark:text-white" placeholder="Papa pastusa, transporte..." value="${escapeHtml(item.description || "")}">
     </label>
-    <label class="flex flex-col gap-1">
+    <label class="flex min-w-0 flex-col gap-1">
       <span class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Cantidad</span>
-      <input data-item-field="quantity" type="number" min="0" step="0.01" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/30 dark:border-slate-700 dark:bg-slate-900 dark:text-white" value="${escapeHtml(String(item.quantity ?? 1))}">
+      <input data-item-field="quantity" type="number" min="0" step="0.01" class="w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/30 dark:border-slate-700 dark:bg-slate-900 dark:text-white" value="${escapeHtml(String(item.quantity ?? 1))}">
     </label>
-    <label class="flex flex-col gap-1">
+    <label class="flex min-w-0 flex-col gap-1">
       <span class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Precio unit.</span>
-      <input data-item-field="unitPrice" type="number" min="0" step="0.01" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/30 dark:border-slate-700 dark:bg-slate-900 dark:text-white" value="${escapeHtml(String(item.unitPrice ?? 0))}">
+      <input data-item-field="unitPrice" type="number" min="0" step="0.01" class="w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/30 dark:border-slate-700 dark:bg-slate-900 dark:text-white" value="${escapeHtml(String(item.unitPrice ?? 0))}">
     </label>
-    <div class="flex flex-col gap-1">
+    <div class="flex min-w-0 flex-col gap-1">
       <span class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Total</span>
       <p data-item-total class="rounded-lg border border-dashed border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white">${formatMoney(Number(item.quantity ?? 1) * Number(item.unitPrice ?? 0))}</p>
     </div>
-    <button type="button" data-remove-item class="inline-flex h-10 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-slate-500 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:border-slate-700 dark:bg-slate-950 dark:hover:bg-rose-950/40 dark:hover:text-rose-300" aria-label="Eliminar ítem">
+    <button type="button" data-remove-item class="inline-flex h-10 items-center justify-center justify-self-end rounded-lg border border-slate-200 bg-white px-3 text-slate-500 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:border-slate-700 dark:bg-slate-950 dark:hover:bg-rose-950/40 dark:hover:text-rose-300" aria-label="Eliminar ítem">
       <span class="material-symbols-outlined text-base">delete</span>
     </button>
   `;
@@ -289,25 +386,89 @@ function renderInvoiceItemsDetail(inv) {
 async function initInvoicesPage() {
   const user = await protectPage();
   if (!user) return;
+  const writable = canWriteAccounting(user);
 
   const tbody = document.getElementById("invoices-tbody");
   const detail = document.getElementById("invoice-detail");
   const modal = document.getElementById("modal-invoice");
+  const actionModal = document.getElementById("modal-invoice-action");
   const newBtn = document.getElementById("btn-new-invoice");
+  const editBtn = document.getElementById("invoice-edit");
   const form = document.getElementById("invoice-form");
   const status = document.getElementById("invoices-status");
   const formStatus = document.getElementById("invoice-form-status");
   const submitBtn = document.getElementById("invoice-submit");
   const addItemBtn = document.getElementById("invoice-add-item");
+  const payBtn = document.getElementById("invoice-pay");
   const printBtn = document.getElementById("invoice-print");
   const filterButtons = Array.from(document.querySelectorAll("[data-invoice-filter]"));
   const itemsList = modal?.querySelector("#invoice-items-list");
-  if (!tbody || !detail || !modal || !newBtn || !form || !itemsList) return;
+  if (!tbody || !detail || !modal || !actionModal || !newBtn || !form || !itemsList) return;
+  if (!writable) {
+    if (newBtn) {
+      newBtn.disabled = true;
+      newBtn.classList.add("cursor-not-allowed", "opacity-60");
+      newBtn.title = "Solo lectura para este perfil";
+    }
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.classList.add("cursor-not-allowed", "opacity-60");
+    }
+    if (addItemBtn) {
+      addItemBtn.disabled = true;
+      addItemBtn.classList.add("cursor-not-allowed", "opacity-60");
+    }
+  }
 
   let editingId = null;
   let currentFilter = "all";
   let cachedRows = [];
+  let currentRenderedRows = [];
   let selectedInvoice = null;
+
+  function openInvoiceEditor(inv) {
+    if (!inv) return;
+    if (!writable) {
+      if (status) status.textContent = "Tu perfil es solo lectura.";
+      return;
+    }
+
+    editingId = inv.id;
+    modal.dataset.editingId = String(inv.id);
+    setModalTitle(modal, "Editar factura");
+    form.querySelector("#inv-number").value = inv.number || "";
+    form.querySelector("#inv-party").value = inv.party || "";
+    form.querySelector("#inv-date").value = toInputDate(inv.date);
+    form.querySelector("#inv-due").value = toInputDate(inv.dueDate);
+    itemsList.innerHTML = "";
+    const invoiceItems = (safeArray(inv.items)?.length ?? 0)
+      ? safeArray(inv.items)
+      : [{ description: inv.party || "Concepto general", quantity: 1, unitPrice: Number(inv.amount || 0) }];
+    invoiceItems.forEach((item) => ensureInvoiceItemRow(modal, item));
+    form.querySelector("#inv-status").value = normalizeInvoiceStatus(inv.status);
+    syncInvoiceItems(modal);
+    openModal();
+  }
+
+  function syncSelectedRow() {
+    const selectedId = selectedInvoice?.id != null ? String(selectedInvoice.id) : null;
+    tbody.querySelectorAll("[data-invoice-row]").forEach((row) => {
+      const rowId = row.dataset.invoiceRow || null;
+      const active = selectedId !== null && rowId === selectedId;
+      row.dataset.selected = active ? "true" : "false";
+      row.classList.toggle("bg-sky-50/80", active);
+      row.classList.toggle("dark:bg-sky-950/30", active);
+      row.classList.toggle("shadow-[inset_4px_0_0_0_var(--color-primary)]", active);
+      row.querySelectorAll("[data-select-invoice], [data-label='Acciones']").forEach((cell) => {
+        cell.classList.toggle("bg-sky-50/80", active);
+        cell.classList.toggle("dark:bg-sky-950/30", active);
+      });
+    });
+  }
+
+  function findRenderedInvoice(id) {
+    return currentRenderedRows.find((row) => String(row.id) === String(id || ""));
+  }
 
   const renderSelection = (inv) => {
     if (!inv) {
@@ -329,6 +490,10 @@ async function initInvoicesPage() {
         empty.textContent = "Selecciona una factura para ver sus ítems.";
       }
       renderInvoiceItemsDetail(null);
+      if (payBtn) {
+        payBtn.disabled = true;
+        payBtn.classList.add("opacity-60", "cursor-not-allowed");
+      }
       return;
     }
 
@@ -341,6 +506,17 @@ async function initInvoicesPage() {
     setText(detail, "#invoice-id", `#${inv.id}`);
     selectedInvoice = inv;
     renderInvoiceItemsDetail(inv);
+    if (payBtn) {
+      const paid = isPaidStatus(inv.status);
+      payBtn.disabled = !writable || paid;
+      payBtn.classList.toggle("opacity-60", !writable || paid);
+      payBtn.classList.toggle("cursor-not-allowed", !writable || paid);
+      payBtn.innerHTML = !writable
+        ? '<span class="material-symbols-outlined text-base">visibility</span> Solo lectura'
+        : paid
+          ? '<span class="material-symbols-outlined text-base">check_circle</span> Pagada'
+          : '<span class="material-symbols-outlined text-base">payments</span> Marcar pagada';
+    }
   };
 
   const setDetail = (inv) => {
@@ -387,67 +563,88 @@ async function initInvoicesPage() {
       return;
     }
 
+    currentRenderedRows = visibleRows;
+
     tbody.innerHTML = visibleRows.map((r) => `
-      <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-        <td data-label="Número" class="px-4 py-3 text-slate-800 text-sm font-medium">${escapeHtml(r.number)}</td>
-        <td data-label="Contraparte" class="px-4 py-3 text-slate-500 text-sm">${escapeHtml(r.party)}</td>
-        <td data-label="Emisión" class="px-4 py-3 text-slate-500 text-sm">${escapeHtml(formatDate(r.date))}</td>
-        <td data-label="Vencimiento" class="px-4 py-3 text-slate-500 text-sm">${escapeHtml(formatDate(r.dueDate))}</td>
-        <td data-label="Monto" class="px-4 py-3 text-slate-500 text-sm">${escapeHtml(formatMoney(r.amount))}</td>
-        <td data-label="Estado" class="px-4 py-3 text-sm">${renderStatusBadge(r.status)}</td>
+      <tr data-invoice-row="${r.id}" class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+        <td data-label="Número" data-select-invoice="${r.id}" tabindex="0" class="cursor-pointer px-4 py-3 text-slate-800 text-sm font-medium focus:outline-none focus-visible:bg-slate-50 dark:focus-visible:bg-slate-800/50">${escapeHtml(r.number)}</td>
+        <td data-label="Contraparte" data-select-invoice="${r.id}" tabindex="0" class="cursor-pointer px-4 py-3 text-slate-500 text-sm focus:outline-none focus-visible:bg-slate-50 dark:focus-visible:bg-slate-800/50">${escapeHtml(r.party)}</td>
+        <td data-label="Emisión" data-select-invoice="${r.id}" tabindex="0" class="cursor-pointer px-4 py-3 text-slate-500 text-sm focus:outline-none focus-visible:bg-slate-50 dark:focus-visible:bg-slate-800/50">${escapeHtml(formatDate(r.date))}</td>
+        <td data-label="Vencimiento" data-select-invoice="${r.id}" tabindex="0" class="cursor-pointer px-4 py-3 text-slate-500 text-sm focus:outline-none focus-visible:bg-slate-50 dark:focus-visible:bg-slate-800/50">${escapeHtml(formatDate(r.dueDate))}</td>
+        <td data-label="Monto" data-select-invoice="${r.id}" tabindex="0" class="cursor-pointer px-4 py-3 text-slate-500 text-sm focus:outline-none focus-visible:bg-slate-50 dark:focus-visible:bg-slate-800/50">${escapeHtml(formatMoney(r.amount))}</td>
+        <td data-label="Estado" data-select-invoice="${r.id}" tabindex="0" class="cursor-pointer px-4 py-3 text-sm focus:outline-none focus-visible:bg-slate-50 dark:focus-visible:bg-slate-800/50">${renderStatusBadge(r.status)}</td>
         <td data-label="Acciones" class="px-4 py-3 text-right">
-          <button data-id="${r.id}" class="mr-2 text-blue-600 hover:text-blue-800 btn-inv-edit" title="Editar factura"><span class="material-symbols-outlined">edit</span></button>
-          <button data-id="${r.id}" class="mr-2 text-gray-400 hover:text-slate-800 btn-inv-view" title="Ver detalle"><span class="material-symbols-outlined">visibility</span></button>
-          <button data-id="${r.id}" class="text-red-600 hover:text-red-800 btn-inv-del" title="Eliminar factura"><span class="material-symbols-outlined">delete</span></button>
+          ${writable ? `<button type="button" data-invoice-action="edit" data-id="${r.id}" class="mr-2 text-blue-600 hover:text-blue-800" title="Editar factura" aria-label="Editar factura ${escapeHtml(r.number)}"><span class="material-symbols-outlined">edit</span></button><button type="button" data-invoice-action="view" data-id="${r.id}" class="mr-2 text-gray-400 hover:text-slate-800" title="Ver detalle" aria-label="Ver detalle de factura ${escapeHtml(r.number)}"><span class="material-symbols-outlined">visibility</span></button><button type="button" data-invoice-action="delete" data-id="${r.id}" class="text-red-600 hover:text-red-800" title="Eliminar factura" aria-label="Eliminar factura ${escapeHtml(r.number)}"><span class="material-symbols-outlined">delete</span></button>` : `<button type="button" data-invoice-action="view" data-id="${r.id}" class="mr-2 text-gray-400 hover:text-slate-800" title="Ver detalle" aria-label="Ver detalle de factura ${escapeHtml(r.number)}"><span class="material-symbols-outlined">visibility</span></button><span class="text-xs text-slate-500 dark:text-slate-400">Solo lectura</span>`}
         </td>
       </tr>`).join("");
 
-    tbody.querySelectorAll(".btn-inv-edit").forEach((button) => {
-      button.addEventListener("click", async () => {
-        const inv = rowList.find((x) => x.id === Number(button.dataset.id));
-        if (!inv) return;
-        editingId = inv.id;
-        modal.dataset.editingId = String(inv.id);
-        setModalTitle(modal, "Editar factura");
-        form.querySelector("#inv-number").value = inv.number || "";
-        form.querySelector("#inv-party").value = inv.party || "";
-        form.querySelector("#inv-date").value = toInputDate(inv.date);
-        form.querySelector("#inv-due").value = toInputDate(inv.dueDate);
-        itemsList.innerHTML = "";
-      const invoiceItems = (safeArray(inv.items)?.length ?? 0)
-          ? safeArray(inv.items)
-          : [{ description: inv.party || "Concepto general", quantity: 1, unitPrice: Number(inv.amount || 0) }];
-        invoiceItems.forEach((item) => ensureInvoiceItemRow(modal, item));
-        form.querySelector("#inv-status").value = normalizeInvoiceStatus(inv.status);
-        syncInvoiceItems(modal);
-        openModal();
-      });
-    });
-
-    tbody.querySelectorAll(".btn-inv-view").forEach((button) => {
-      button.addEventListener("click", async () => {
-        const inv = rowList.find((x) => x.id === Number(button.dataset.id));
-        if (inv) setDetail(inv);
-      });
-    });
-
-  tbody.querySelectorAll(".btn-inv-del").forEach((button) => {
-    button.addEventListener("click", async () => {
-      const inv = rowList.find((x) => x.id === Number(button.dataset.id));
-      if (!confirm(`Eliminar la factura ${inv?.number || "seleccionada"}?`)) return;
-      try {
-        const response = await apiFetch(`/api/invoices/${button.dataset.id}`, { method: "DELETE" });
-        if (!response.ok) {
-          throw new Error("No se pudo eliminar la factura.");
+    tbody.querySelectorAll("[data-select-invoice]").forEach((cell) => {
+      cell.addEventListener("click", () => {
+        const inv = findRenderedInvoice(cell.dataset.selectInvoice);
+        if (inv) {
+          if (status) status.textContent = `Mostrando factura ${inv.number}.`;
+          setDetail(inv);
+          syncSelectedRow();
         }
-        await loadInvoices();
-      } catch (error) {
-        if (status) status.textContent = error.message || "No se pudo eliminar la factura.";
-      }
+      });
+
+      cell.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        const inv = findRenderedInvoice(cell.dataset.selectInvoice);
+        if (inv) {
+          if (status) status.textContent = `Mostrando factura ${inv.number}.`;
+          setDetail(inv);
+          syncSelectedRow();
+        }
+      });
     });
-  });
+
+    tbody.querySelectorAll("[data-invoice-action]").forEach((button) => {
+      button.addEventListener("click", async (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const inv = findRenderedInvoice(button.dataset.id);
+        if (!inv) return;
+
+        const action = button.dataset.invoiceAction;
+        if (action === "edit") {
+          if (status) status.textContent = `Editando factura ${inv.number}.`;
+          openInvoiceEditor(inv);
+          return;
+        }
+
+        if (action === "view") {
+          if (status) status.textContent = `Mostrando factura ${inv.number}.`;
+          setDetail(inv);
+          syncSelectedRow();
+          return;
+        }
+
+        if (action === "delete") {
+          if (status) status.textContent = `Preparando eliminación de ${inv.number}...`;
+          const accepted = await openActionDialog(actionModal, {
+            title: "Eliminar factura",
+            message: `Vas a eliminar la factura ${inv?.number || "seleccionada"}. Esta acción no se puede deshacer.`,
+            confirmLabel: "Eliminar",
+            confirmTone: "danger",
+          });
+          if (!accepted) return;
+          try {
+            const response = await apiFetch(`/api/invoices/${inv.id}`, { method: "DELETE" });
+            if (!response.ok) {
+              throw new Error("No se pudo eliminar la factura.");
+            }
+            await loadInvoices();
+          } catch (error) {
+            if (status) status.textContent = error.message || "No se pudo eliminar la factura.";
+          }
+        }
+      });
+    });
 
     if (visibleRows[0]) setDetail(visibleRows[0]);
+    syncSelectedRow();
     if (status) status.textContent = `${visibleRows?.length ?? 0} factura(s) cargada(s).`;
   }
 
@@ -478,6 +675,10 @@ async function initInvoicesPage() {
   }
 
   newBtn.addEventListener("click", () => {
+    if (!writable) {
+      if (status) status.textContent = "Tu perfil es solo lectura.";
+      return;
+    }
     form.reset();
     delete modal.dataset.editingId;
     editingId = null;
@@ -529,7 +730,59 @@ async function initInvoicesPage() {
         if (status) status.textContent = "Selecciona una factura para exportar PDF.";
         return;
       }
-      openInvoicePrintPreview(invoice);
+      const printed = openInvoicePrintPreview(invoice);
+      if (!printed && status) status.textContent = "No se pudo abrir la vista de PDF.";
+    });
+  }
+
+  if (payBtn) {
+    payBtn.addEventListener("click", async () => {
+      if (!writable) {
+        if (status) status.textContent = "Tu perfil es solo lectura.";
+        return;
+      }
+      const invoice = selectedInvoice || safeArray(cachedRows)[0] || null;
+      if (!invoice) {
+        if (status) status.textContent = "Selecciona una factura para registrar el pago.";
+        return;
+      }
+
+      if (isPaidStatus(invoice.status)) {
+        if (status) status.textContent = "La factura ya está pagada.";
+        return;
+      }
+
+      const accepted = await openActionDialog(actionModal, {
+        title: "Registrar pago",
+        message: `Vas a marcar como pagada la factura ${invoice.number}. Se generará el movimiento contable asociado.`,
+        confirmLabel: "Marcar pagada",
+        confirmTone: "success",
+      });
+      if (!accepted) return;
+
+      payBtn.disabled = true;
+      if (status) status.textContent = "Registrando pago...";
+
+      try {
+        await apiJson(`/api/invoices/${invoice.id}/pay`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ note: `Pago factura ${invoice.number}` }),
+        });
+        await loadInvoices();
+      } catch (error) {
+        if (status) status.textContent = error.message || "No se pudo registrar el pago.";
+      }
+    });
+  }
+
+  if (editBtn) {
+    editBtn.addEventListener("click", () => {
+      if (!selectedInvoice) {
+        if (status) status.textContent = "Selecciona una factura para editarla.";
+        return;
+      }
+      openInvoiceEditor(selectedInvoice);
     });
   }
 
@@ -548,6 +801,7 @@ async function initInvoicesPage() {
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
+    if (!writable) return;
     const payload = invoicePayload(modal);
     const currentId = editingId || (modal.dataset.editingId ? Number(modal.dataset.editingId) : null);
     setBusy(true, currentId ? "Actualizando factura..." : "Guardando factura...");

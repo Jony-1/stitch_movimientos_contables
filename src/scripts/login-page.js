@@ -1,9 +1,7 @@
 import { apiJson, resetCsrfTokenCache } from "./api.js";
-import { initAuthPage } from "./auth.js";
+import { getHomeRoute } from "./auth.js";
 
 async function initLoginPage() {
-  await initAuthPage();
-
   const form = document.getElementById("login-form");
   const errorBox = document.getElementById("login-error");
   if (!form) return;
@@ -39,13 +37,13 @@ async function initLoginPage() {
         errorBox.className = "min-h-5 text-sm text-red-600";
         errorBox.textContent = "";
       }
-      await apiJson("/api/login", {
+      const user = await apiJson("/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
       resetCsrfTokenCache();
-      window.location.href = "/dashboard";
+      window.location.href = getHomeRoute(user);
     } catch (error) {
       if (errorBox) errorBox.textContent = error.message || "Error al iniciar sesión";
     } finally {

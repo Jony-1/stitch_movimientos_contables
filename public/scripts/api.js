@@ -1,4 +1,16 @@
-const API_BASE = window.location.origin;
+function resolveApiBase() {
+  const envBase = window.PUBLIC_API_BASE_URL;
+  if (envBase) return envBase;
+
+  const { protocol, hostname, port, origin } = window.location;
+  if (port === "3001" || port === "4321") {
+    return `${protocol}//${hostname}:3000`;
+  }
+
+  return origin;
+}
+
+const API_BASE = resolveApiBase();
 let csrfTokenPromise = null;
 
 async function readJson(response) {

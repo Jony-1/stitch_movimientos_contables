@@ -11,14 +11,14 @@ const { title, active, name, role, email } = Astro.props;
   <head>
     <Head title={title} />
   </head>
-  <body class="min-h-screen font-display text-slate-900 antialiased transition-colors duration-300 dark:text-slate-100">
+  <body class="min-h-screen overflow-x-hidden font-display text-slate-900 antialiased transition-colors duration-300 dark:text-slate-100">
     <div class="flex min-h-screen w-full bg-transparent">
       <div id="sidebar-overlay" class="fixed inset-0 z-40 hidden bg-slate-950/50 transition-opacity duration-300 md:hidden" data-sidebar-close></div>
       <aside id="sidebar-container" class="surface-shell fixed left-0 top-0 z-50 h-screen w-72 max-w-[85vw] -translate-x-full overflow-y-auto border-r shadow-2xl transition-transform duration-300 ease-in-out md:static md:translate-x-0 md:shadow-none">
         <Sidebar active={active} />
       </aside>
 
-      <main class="flex min-w-0 flex-1 flex-col overflow-hidden">
+      <main class="flex min-w-0 flex-1 flex-col">
         <div class="surface-shell sticky top-0 z-30 flex h-16 flex-shrink-0 items-center border-b px-2 shadow-sm sm:px-3 lg:px-4">
           <button id="sidebar-toggle" class="flex-shrink-0 rounded-xl p-3 text-slate-600 transition-colors hover:bg-slate-100 md:hidden" title="Abrir menu">
             <span class="material-symbols-outlined text-2xl">menu</span>
@@ -28,7 +28,7 @@ const { title, active, name, role, email } = Astro.props;
           </div>
         </div>
 
-        <div class="w-full flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+        <div class="w-full flex-1 p-4 sm:p-6 lg:p-8">
           <slot />
         </div>
       </main>

@@ -25,6 +25,18 @@ function hasRequiredRole(user, requiredRole) {
   return String(user?.role || "").toLowerCase() === String(requiredRole).toLowerCase();
 }
 
+function isReadOnlyRole(user) {
+  return String(user?.role || "").toLowerCase() === "contador";
+}
+
+function canWriteAccounting(user) {
+  return !isReadOnlyRole(user);
+}
+
+function getHomeRoute(user) {
+  return isReadOnlyRole(user) ? "/reportes" : "/dashboard";
+}
+
 function wireLogoutLinks() {
   document.querySelectorAll("[data-logout-link]").forEach((link) => {
     link.addEventListener("click", async (event) => {
@@ -74,7 +86,7 @@ async function protectPage(options = {}) {
 async function initAuthPage() {
   const user = await getCurrentUser();
   if (user) {
-    window.location.href = "/dashboard";
+    window.location.href = getHomeRoute(user);
     return user;
   }
   return null;
@@ -84,4 +96,4 @@ function resetCsrfTokenCache() {
   resetApiCsrfTokenCache();
 }
 
-export { getCurrentUser, initAuthPage, protectPage, wireLogoutLinks, resetCsrfTokenCache };
+export { canWriteAccounting, getCurrentUser, getHomeRoute, initAuthPage, protectPage, wireLogoutLinks, resetCsrfTokenCache };

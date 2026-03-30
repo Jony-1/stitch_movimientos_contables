@@ -1,4 +1,4 @@
-import { apiJson, formatDate, formatMoney } from "./api.js";
+import { API_BASE, apiJson, formatDate, formatMoney } from "./api.js";
 import { protectPage } from "./auth.js";
 
 function escapeHtml(value) {
@@ -68,55 +68,22 @@ function formatMonthLabel(monthKey) {
   return date.toLocaleDateString("es-CO", { month: "short", year: "numeric" });
 }
 
-function csvCell(value) {
-  return `"${String(value ?? "").replace(/"/g, '""')}"`;
-}
+async function downloadFile(url, filename) {
+  const response = await fetch(`${API_BASE}${url}`, { credentials: "include" });
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "No se pudo descargar el archivo.");
+  }
 
-function buildCsv(report) {
-  const movements = Array.isArray(report?.movements?.movements) ? report.movements.movements : [];
-  const invoices = Array.isArray(report?.invoices?.invoices) ? report.invoices.invoices : [];
-
-  const movementRows = [
-    ["Movimientos"],
-    ["Fecha", "Tipo", "Categoría", "Descripción", "Monto", "Estado"],
-    ...movements.map((movement) => [
-      formatDate(movement.date),
-      movement.type || "",
-      movement.category || "Sin categoría",
-      movement.description || "",
-      String(Number(movement.amount || 0)),
-      movement.status || "",
-    ]),
-  ];
-
-  const invoiceRows = [
-    ["Facturas"],
-    ["Número", "Contraparte", "Fecha", "Vencimiento", "Monto", "Estado"],
-    ...invoices.map((invoice) => [
-      invoice.number || "",
-      invoice.party || "",
-      formatDate(invoice.date),
-      formatDate(invoice.dueDate),
-      String(Number(invoice.amount || 0)),
-      invoice.status || "",
-    ]),
-  ];
-
-  return [...movementRows, [], ...invoiceRows]
-    .map((row) => row.map(csvCell).join(";"))
-    .join("\n");
-}
-
-function downloadCsv(report) {
-  const blob = new Blob([buildCsv(report)], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
+  const blob = await response.blob();
+  const objectUrl = URL.createObjectURL(blob);
   const link = document.createElement("a");
-  link.href = url;
-  link.download = `reporte-${toInputDate(new Date())}.csv`;
+  link.href = objectUrl;
+  link.download = filename;
   document.body.appendChild(link);
   link.click();
   link.remove();
-  URL.revokeObjectURL(url);
+  URL.revokeObjectURL(objectUrl);
 }
 
 function renderStatCards(report) {
@@ -360,16 +327,6 @@ function buildPrintableHtml(report) {
   </html>`;
 }
 
-function exportPdf(report) {
-  const win = window.open("", "_blank", "noopener,noreferrer,width=1200,height=900");
-  if (!win) return;
-  win.document.open();
-  win.document.write(buildPrintableHtml(report));
-  win.document.close();
-  win.focus();
-  setTimeout(() => win.print(), 300);
-}
-
 async function initReportsPage() {
   const user = await protectPage();
   if (!user) return;
@@ -400,7 +357,6 @@ async function initReportsPage() {
 
   const state = { preset: "all", from: "", to: "", type: "all" };
   let latestReport = null;
-  let latestReportKey = "";
 
   function setStatus(message) {
     if (status) status.textContent = message || "";
@@ -444,6 +400,14 @@ async function initReportsPage() {
     return `/api/reports/overview${params.toString() ? `?${params.toString()}` : ""}`;
   }
 
+  function buildPdfUrl() {
+    return buildReportUrl().replace("/api/reports/overview", "/api/reports/overview/pdf");
+  }
+
+  function buildCsvUrl() {
+    return buildReportUrl().replace("/api/reports/overview", "/api/reports/overview/csv");
+  }
+
   async function fetchReport() {
     const filters = getFilters();
     state.from = filters.from || "";
@@ -452,14 +416,7 @@ async function initReportsPage() {
     const url = buildReportUrl();
     const report = await apiJson(url);
     latestReport = report;
-    latestReportKey = url;
     return report;
-  }
-
-  async function ensureLatestReport() {
-    const url = buildReportUrl();
-    if (latestReport && latestReportKey === url) return latestReport;
-    return fetchReport();
   }
 
   function render(report) {
@@ -483,7 +440,11 @@ async function initReportsPage() {
     if (movementsTbody) movementsTbody.innerHTML = renderMovementsTable(safeReport.movements?.movements || []);
     if (invoicesTbody) invoicesTbody.innerHTML = renderInvoicesTable(safeReport.invoices?.invoices || []);
 
-    setStatus(`${summary.movementCount || 0} movimiento(s) y ${summary.invoiceCount || 0} factura(s) analizados.`);
+    const baseMessage = `${summary.movementCount || 0} movimiento(s) y ${summary.invoiceCount || 0} factura(s) analizados.`;
+    const warningMessage = Array.isArray(safeReport.warnings) && safeReport.warnings.length
+      ? ` Aviso: ${safeReport.warnings[0]}`
+      : "";
+    setStatus(`${baseMessage}${warningMessage}`);
   }
 
   async function loadReport() {
@@ -491,15 +452,6 @@ async function initReportsPage() {
       applyBtn.disabled = true;
       applyBtn.classList.add("opacity-70");
     }
-    if (exportCsvBtn) {
-      exportCsvBtn.disabled = true;
-      exportCsvBtn.classList.add("opacity-70");
-    }
-    if (exportPdfBtn) {
-      exportPdfBtn.disabled = true;
-      exportPdfBtn.classList.add("opacity-70");
-    }
-
     setStatus("Cargando reportes...");
     if (movementsTbody) movementsTbody.innerHTML = `<tr><td colspan="6" class="px-4 py-10 text-center text-sm text-slate-500 dark:text-slate-400">Cargando movimientos...</td></tr>`;
     if (invoicesTbody) invoicesTbody.innerHTML = `<tr><td colspan="6" class="px-4 py-10 text-center text-sm text-slate-500 dark:text-slate-400">Cargando facturas...</td></tr>`;
@@ -519,12 +471,12 @@ async function initReportsPage() {
         applyBtn.classList.remove("opacity-70");
       }
       if (exportCsvBtn) {
-        exportCsvBtn.disabled = !latestReport;
-        exportCsvBtn.classList.toggle("opacity-70", !latestReport);
+        exportCsvBtn.disabled = false;
+        exportCsvBtn.classList.remove("opacity-70");
       }
       if (exportPdfBtn) {
-        exportPdfBtn.disabled = !latestReport;
-        exportPdfBtn.classList.toggle("opacity-70", !latestReport);
+        exportPdfBtn.disabled = false;
+        exportPdfBtn.classList.remove("opacity-70");
       }
     }
   }
@@ -545,24 +497,24 @@ async function initReportsPage() {
   }
 
   if (exportCsvBtn) {
-    exportCsvBtn.addEventListener("click", () => {
-      if (!latestReport) {
-        setStatus("Carga el reporte antes de exportar.");
-        return;
+    exportCsvBtn.addEventListener("click", async () => {
+      try {
+        await downloadFile(buildCsvUrl(), `reporte-${toInputDate(new Date())}.csv`);
+        setStatus("CSV descargado.");
+      } catch (error) {
+        setStatus(error.message || "No se pudo exportar el CSV.");
       }
-      downloadCsv(latestReport);
-      setStatus("CSV descargado.");
     });
   }
 
   if (exportPdfBtn) {
-    exportPdfBtn.addEventListener("click", () => {
-      if (!latestReport) {
-        setStatus("Carga el reporte antes de exportar.");
-        return;
+    exportPdfBtn.addEventListener("click", async () => {
+      try {
+        await downloadFile(buildPdfUrl(), `reporte-${toInputDate(new Date())}.pdf`);
+        setStatus("PDF descargado.");
+      } catch (error) {
+        setStatus(error.message || "No se pudo exportar el PDF.");
       }
-      exportPdf(latestReport);
-      setStatus("Abriendo vista para PDF.");
     });
   }
 

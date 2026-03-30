@@ -92,7 +92,7 @@ async function testCreateInvoice(cookie, csrfToken) {
     party: "Test Supplier",
     date: "2026-03-27T00:00:00.000Z",
     dueDate: "2026-04-27T00:00:00.000Z",
-    status: "pending",
+    status: "Pendiente",
     items: [
       { description: "Papa pastusa", quantity: 12, unitPrice: 45000 },
       { description: "Transporte", quantity: 1, unitPrice: 50000 },
@@ -114,6 +114,28 @@ async function testCreateInvoice(cookie, csrfToken) {
   } else {
     console.log(`✗ POST /api/invoices returned ${response.statusCode}`);
   }
+
+  return response.body;
+}
+
+async function testPayInvoice(cookie, csrfToken, invoice) {
+  if (!invoice?.id) return;
+
+  console.log("\n=== Test: Pay Invoice ===");
+  const response = await requestJson(`/api/invoices/${invoice.id}/pay`, {
+    method: "POST",
+    body: { note: `Pago factura ${invoice.number}` },
+    cookie,
+    csrfToken,
+  });
+
+  console.log(`Status: ${response.statusCode}`);
+  console.log(`Paid Invoice: ${JSON.stringify(response.body, null, 2)}`);
+  if (response.statusCode === 200 && String(response.body?.status || "").toLowerCase() === "pagada") {
+    console.log("✓ POST /api/invoices/:id/pay works - payment registered");
+  } else {
+    console.log(`✗ POST /api/invoices/:id/pay returned ${response.statusCode}`);
+  }
 }
 
 async function runTests() {
@@ -122,7 +144,8 @@ async function runTests() {
   const cookie = await login();
   const csrfToken = await getCsrf(cookie);
   await testInvoicesAPI(cookie);
-  await testCreateInvoice(cookie, csrfToken);
+  const createdInvoice = await testCreateInvoice(cookie, csrfToken);
+  await testPayInvoice(cookie, csrfToken, createdInvoice);
   console.log("\n=== All Tests Completed ===\n");
 }
 

@@ -1,5 +1,5 @@
 import { apiJson, formatDate, formatMoney } from "./api.js";
-import { protectPage } from "./auth.js";
+import { canWriteAccounting, protectPage } from "./auth.js";
 
 function renderRecentRows(rows) {
   if (!rows.length) {
@@ -23,9 +23,11 @@ function renderRecentRows(rows) {
 async function initDashboardPage() {
   const user = await protectPage();
   if (!user) return;
+  const writable = canWriteAccounting(user);
 
   const name = document.getElementById("dashboard-user-name");
   const status = document.getElementById("dashboard-status");
+  const primaryAction = document.getElementById("dashboard-primary-action");
   const income = document.getElementById("dashboard-income");
   const expense = document.getElementById("dashboard-expense");
   const balance = document.getElementById("dashboard-balance");
@@ -33,6 +35,10 @@ async function initDashboardPage() {
   const recentTbody = document.getElementById("dashboard-recent-tbody");
 
   if (name) name.textContent = user.name || "Usuario";
+  if (primaryAction && !writable) {
+    primaryAction.href = "/reportes";
+    primaryAction.innerHTML = '<span class="material-symbols-outlined text-base">bar_chart</span><span>Ver reportes</span>';
+  }
   if (status) status.textContent = "Cargando resumen...";
   if (recentTbody) {
     recentTbody.innerHTML = `<tr><td colspan="4" class="px-4 py-10 text-center text-sm text-slate-500 dark:text-slate-400">Cargando movimientos recientes...</td></tr>`;
@@ -45,7 +51,7 @@ async function initDashboardPage() {
     if (balance) balance.textContent = formatMoney(summary.balance);
     if (count) count.textContent = String(summary.totalCount || 0);
     if (recentTbody) recentTbody.innerHTML = renderRecentRows(summary.recentMovements || []);
-    if (status) status.textContent = summary.totalCount ? `${summary.totalCount} movimiento(s) cargado(s).` : "Todavía no hay movimientos.";
+    if (status) status.textContent = `${summary.totalCount ? `${summary.totalCount} movimiento(s) cargado(s).` : "Todavía no hay movimientos."}${writable ? "" : " · Modo consulta"}`;
   } catch (error) {
     if (status) status.textContent = error.message || "No se pudo cargar el resumen.";
     if (recentTbody) {

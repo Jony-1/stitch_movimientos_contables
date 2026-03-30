@@ -30,15 +30,16 @@ function resetUserForm(form) {
 async function renderUsers(container, currentUser) {
   const status = document.getElementById("users-status");
   if (status) status.textContent = "Cargando usuarios...";
-  container.innerHTML = `<div class="surface-card p-6 text-sm text-gray-500 shadow-[0_18px_40px_rgba(15,23,42,0.08)] backdrop-blur-xl dark:text-gray-400">Cargando usuarios...</div>`;
+    container.innerHTML = `<div class="surface-card p-6 text-sm text-slate-500 dark:text-slate-400">Cargando usuarios...</div>`;
 
   try {
     const rawRows = await apiJson("/api/users");
     const rows = Array.isArray(rawRows) ? rawRows : [];
     container.innerHTML = (rows?.length ?? 0)
     ? `
-      <div class="surface-card shadow-[0_18px_40px_rgba(15,23,42,0.08)] backdrop-blur-xl overflow-hidden">
-        <table class="w-full">
+      <div class="surface-card overflow-hidden">
+        <div class="overflow-x-auto">
+        <table class="w-full min-w-[640px]">
           <thead class="bg-slate-50 dark:bg-slate-900">
             <tr>
               <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Nombre</th>
@@ -72,8 +73,9 @@ async function renderUsers(container, currentUser) {
               .join("")}
           </tbody>
         </table>
+        </div>
       </div>`
-    : `<div class="surface-card shadow-[0_18px_40px_rgba(15,23,42,0.08)] backdrop-blur-xl p-6 text-sm text-slate-500 dark:text-slate-400">No hay usuarios.</div>`;
+    : `<div class="surface-card p-6 text-sm text-slate-500 dark:text-slate-400">No hay usuarios.</div>`;
 
     if (status) status.textContent = (rows?.length ?? 0) ? `${rows?.length ?? 0} usuario(s) cargado(s).` : "No hay usuarios registrados.";
 
@@ -113,7 +115,7 @@ async function renderUsers(container, currentUser) {
       });
     });
   } catch (error) {
-    container.innerHTML = `<div class="surface-card p-6 text-sm text-red-600 shadow-[0_18px_40px_rgba(15,23,42,0.08)] backdrop-blur-xl">${error.message || "No se pudieron cargar los usuarios."}</div>`;
+    container.innerHTML = `<div class="surface-card p-6 text-sm text-red-600">${error.message || "No se pudieron cargar los usuarios."}</div>`;
     if (status) status.textContent = error.message || "No se pudieron cargar los usuarios.";
   }
 }

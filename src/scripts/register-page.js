@@ -1,9 +1,6 @@
 import { apiJson, resetCsrfTokenCache } from "./api.js";
-import { initAuthPage } from "./auth.js";
 
 async function initRegisterPage() {
-  await initAuthPage();
-
   const form = document.getElementById("register-form");
   const errorBox = document.getElementById("register-error");
   const submitButton = document.getElementById("register-submit");

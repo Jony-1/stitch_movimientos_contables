@@ -1,4 +1,18 @@
-const API_BASE = import.meta.env.PUBLIC_API_BASE_URL || (typeof window !== "undefined" ? window.location.origin : "");
+function resolveApiBase() {
+  const configuredBase = import.meta.env.PUBLIC_API_BASE_URL;
+  if (configuredBase) return configuredBase;
+
+  if (typeof window === "undefined") return "";
+
+  const { protocol, hostname, port, origin } = window.location;
+  if (port === "3001" || port === "4321") {
+    return `${protocol}//${hostname}:3000`;
+  }
+
+  return origin;
+}
+
+const API_BASE = resolveApiBase();
 let csrfTokenPromise = null;
 
 async function readJson(response) {
@@ -9,7 +23,11 @@ async function readJson(response) {
   } catch (_) {}
 
   if (!response.ok) {
-    const message = (data && (data.error || data.message)) || text || `HTTP ${response.status}`;
+    const fallbackText = String(text || "")
+      .replace(/<[^>]*>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    const message = (data && (data.error || data.message)) || fallbackText || `HTTP ${response.status}`;
     throw new Error(message);
   }
 

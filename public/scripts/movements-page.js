@@ -1,5 +1,5 @@
 import { apiJson, apiFetch, formatDate, formatMoney } from "./api.js";
-import { protectPage } from "./auth.js";
+import { canWriteAccounting, protectPage } from "./auth.js";
 
 function getFormValues(form) {
   return {
@@ -23,6 +23,7 @@ function getAmountLabel(type) {
 async function initMovementsPage() {
   const user = await protectPage();
   if (!user) return;
+  const writable = canWriteAccounting(user);
 
   const modal = document.getElementById("new-movement-modal");
   const tbody = document.getElementById("movements-tbody");
@@ -37,6 +38,11 @@ async function initMovementsPage() {
   const expenseTotalEl = document.getElementById("movements-expense-total");
   const balanceEl = document.getElementById("movements-balance");
   if (!modal || !tbody || !newBtn || !form) return;
+  if (!writable) {
+    newBtn.disabled = true;
+    newBtn.classList.add("cursor-not-allowed", "opacity-60");
+    newBtn.title = "Solo lectura para este perfil";
+  }
 
   let editingId = null;
   let currentFilter = "all";
@@ -118,10 +124,7 @@ async function initMovementsPage() {
         <td class="px-4 py-4 text-sm">
           <div class="flex flex-col gap-1 items-start">
             <span class="px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">${m.status || "Registrado"}</span>
-            <div class="flex gap-4">
-              <button class="text-blue-600 hover:underline js-edit" data-id="${m.id}">Editar</button>
-              <button class="text-red-600 hover:underline js-delete" data-id="${m.id}">Eliminar</button>
-            </div>
+            ${writable ? `<div class="flex gap-4"><button class="text-blue-600 hover:underline js-edit" data-id="${m.id}">Editar</button><button class="text-red-600 hover:underline js-delete" data-id="${m.id}">Eliminar</button></div>` : `<span class="text-xs text-slate-500 dark:text-slate-400">Solo lectura</span>`}
           </div>
         </td>
       </tr>`).join("");
@@ -196,6 +199,10 @@ async function initMovementsPage() {
   });
 
   newBtn.addEventListener("click", () => {
+    if (!writable) {
+      if (status) status.textContent = "Tu perfil es solo lectura.";
+      return;
+    }
     resetForm();
     openModal();
   });
@@ -206,6 +213,7 @@ async function initMovementsPage() {
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
+    if (!writable) return;
     const payload = getFormValues(form);
     if (!payload.amount || payload.amount <= 0) {
       if (formStatus) formStatus.textContent = "Ingresa un monto mayor que cero.";

@@ -100,11 +100,26 @@ function ensureAdminApi(req, res, next) {
   return next();
 }
 
+function isReadOnlyRole(user) {
+  return String(user?.role || "").toLowerCase() === "contador";
+}
+
+function ensureAccountingWriteApi(req, res, next) {
+  if (!req.session || !req.session.user) {
+    return res.status(401).json({ error: "no autenticado" });
+  }
+  if (isReadOnlyRole(req.session.user)) {
+    return res.status(403).json({ error: "Permiso denegado" });
+  }
+  return next();
+}
+
 module.exports = {
   attachSecurityHeaders,
   attachCsrfContext,
   ensureAdmin,
   ensureAdminApi,
+  ensureAccountingWriteApi,
   ensureApiAuth,
   ensureAuth,
   ensureGuest,

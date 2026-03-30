@@ -3,6 +3,28 @@ import AppLayout from "../layouts/AppLayout.astro";
 ---
 
 <AppLayout title="Facturas" active="facturas" name="Usuario" role="Productor" email="user@demo.com">
+  <style>
+    #invoices-table thead,
+    #invoices-table thead tr,
+    #invoices-table thead th,
+    #invoices-table tbody td:last-child,
+    #invoices-table thead th:last-child {
+      position: static !important;
+      z-index: auto !important;
+    }
+
+    #invoices-table th,
+    #invoices-table td,
+    #invoices-table button {
+      pointer-events: auto;
+    }
+
+    #modal-invoice,
+    #modal-invoice-action {
+      z-index: 9999;
+    }
+  </style>
+
   <div class="mx-auto flex max-w-7xl flex-col gap-6">
     <section class="surface-card rounded-3xl p-6 sm:p-8">
       <div class="flex flex-wrap items-end gap-4 justify-between">
@@ -33,10 +55,10 @@ import AppLayout from "../layouts/AppLayout.astro";
       </div>
     </section>
 
-    <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-      <section class="surface-card lg:col-span-2 overflow-hidden">
-        <div class="overflow-x-auto">
-          <table class="w-full">
+    <div class="grid grid-cols-1 gap-6 xl:grid-cols-3">
+      <section class="surface-card min-w-0 xl:col-span-2 overflow-hidden">
+        <div class="min-w-0 overflow-x-auto">
+          <table id="invoices-table" class="w-full">
             <thead class="bg-gray-50 dark:bg-gray-900">
               <tr>
                 <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">Número</th>
@@ -53,7 +75,7 @@ import AppLayout from "../layouts/AppLayout.astro";
         </div>
       </section>
 
-      <section id="invoice-detail" class="surface-card sticky top-10 p-6">
+      <section id="invoice-detail" class="surface-card min-w-0 xl:sticky xl:top-6 xl:self-start p-6">
         <h2 class="mb-4 text-lg font-bold text-gray-900 dark:text-white">Detalle de factura</h2>
         <div class="flex items-start justify-between gap-4">
           <div>
@@ -62,6 +84,14 @@ import AppLayout from "../layouts/AppLayout.astro";
           </div>
           <div class="flex flex-col items-end gap-2">
             <span id="invoice-status" class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200"></span>
+            <button id="invoice-edit" type="button" class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-800">
+              <span class="material-symbols-outlined text-base">edit</span>
+              Editar
+            </button>
+            <button id="invoice-pay" type="button" class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700">
+              <span class="material-symbols-outlined text-base">payments</span>
+              Marcar pagada
+            </button>
             <button id="invoice-print" type="button" class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-800">
               <span class="material-symbols-outlined text-base">picture_as_pdf</span>
               PDF
@@ -103,8 +133,8 @@ import AppLayout from "../layouts/AppLayout.astro";
 
   <div id="modal-invoice" class="fixed inset-0 z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity" aria-hidden="true">
     <div class="absolute inset-0 bg-black/40" data-modal-close></div>
-    <div class="relative w-full max-w-xl p-4">
-      <div class="surface-card rounded-xl p-6">
+    <div class="relative w-full max-w-3xl p-4">
+      <div class="surface-card max-h-[calc(100vh-2rem)] overflow-y-auto rounded-xl p-6">
         <div class="mb-4 flex items-start justify-between">
           <h2 id="invoice-modal-title" class="text-lg font-bold text-gray-900 dark:text-white">Nueva factura</h2>
           <button data-modal-close class="text-gray-500 hover:text-gray-900 dark:hover:text-white"><span class="material-symbols-outlined">close</span></button>
@@ -138,8 +168,27 @@ import AppLayout from "../layouts/AppLayout.astro";
     </div>
   </div>
 
+  <div id="modal-invoice-action" class="fixed inset-0 z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity" aria-hidden="true">
+    <div class="absolute inset-0 bg-black/50" data-invoice-action-close></div>
+    <div class="relative w-full max-w-md p-4">
+      <div class="surface-card rounded-2xl p-6 shadow-2xl">
+        <div class="mb-4 flex items-start justify-between gap-4">
+          <div>
+            <p id="invoice-action-title" class="text-lg font-bold text-gray-900 dark:text-white">Confirmar acción</p>
+            <p id="invoice-action-message" class="mt-2 text-sm text-slate-500 dark:text-slate-400"></p>
+          </div>
+          <button type="button" data-invoice-action-close class="text-gray-500 hover:text-gray-900 dark:hover:text-white"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div class="flex justify-end gap-3">
+          <button id="invoice-action-cancel" type="button" class="rounded-lg bg-gray-100 px-4 py-2 text-sm font-semibold dark:bg-gray-800">Cancelar</button>
+          <button id="invoice-action-confirm" type="button" class="rounded-lg px-4 py-2 text-sm font-semibold text-white"></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script type="module">
-    import { initInvoicesPage } from "../scripts/invoices-page.js?v=5";
+    import { initInvoicesPage } from "../scripts/invoices-page.js?v=17";
     const boot = () => initInvoicesPage();
     if (document.readyState === "loading") {
       document.addEventListener("DOMContentLoaded", boot, { once: true });
