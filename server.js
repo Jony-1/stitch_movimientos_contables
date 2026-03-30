@@ -1918,7 +1918,40 @@ async function initDb() {
     await pool.query(`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()`);
     await pool.query(`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS paid_at TIMESTAMP WITH TIME ZONE`);
     await pool.query(`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS payment_movement_id INTEGER`);
-    await pool.query(`UPDATE invoices SET status = CASE WHEN lower(trim(COALESCE(status, ''))) IN ('pagada', 'paid') THEN 'Pagada' WHEN lower(trim(COALESCE(status, ''))) IN ('vencida', 'vencido', 'overdue') THEN 'Vencida' ELSE 'Pendiente' END`);
+    await pool.query(`
+      DO $$
+      DECLARE
+        status_type TEXT;
+      BEGIN
+        SELECT data_type
+          INTO status_type
+          FROM information_schema.columns
+         WHERE table_schema = current_schema()
+           AND table_name = 'invoices'
+           AND column_name = 'status';
+
+        IF status_type = 'USER-DEFINED' THEN
+          EXECUTE $sql$
+            UPDATE invoices
+               SET status = (
+                 CASE
+                   WHEN lower(trim(COALESCE(status::text, ''))) IN ('pagada', 'paid') THEN 'Pagada'
+                   WHEN lower(trim(COALESCE(status::text, ''))) IN ('vencida', 'vencido', 'overdue') THEN 'Vencida'
+                   ELSE 'Pendiente'
+                 END
+               )::invoice_status
+          $sql$;
+        ELSE
+          UPDATE invoices
+             SET status = CASE
+               WHEN lower(trim(COALESCE(status::text, ''))) IN ('pagada', 'paid') THEN 'Pagada'
+               WHEN lower(trim(COALESCE(status::text, ''))) IN ('vencida', 'vencido', 'overdue') THEN 'Vencida'
+               ELSE 'Pendiente'
+             END;
+        END IF;
+      END
+      $$;
+    `);
     await ensureInvoiceItemColumns(pool);
 
     // Seed admin (✅ role = 'admin' consistente)
