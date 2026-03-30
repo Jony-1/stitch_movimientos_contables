@@ -1943,12 +1943,34 @@ async function initDb() {
   }
 }
 
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function initDbWithRetry() {
+  const attempts = parseInt(process.env.DB_INIT_RETRIES || "8", 10);
+  const delayMs = parseInt(process.env.DB_INIT_DELAY_MS || "3000", 10);
+
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      await initDb();
+      return;
+    } catch (error) {
+      console.error(`Intento ${attempt}/${attempts} fallido al inicializar base de datos:`, error.message || error);
+      if (attempt === attempts) {
+        throw error;
+      }
+      await wait(delayMs);
+    }
+  }
+}
+
 // =======================
 // Start server
 // =======================
 async function startServer() {
   try {
-    await initDb();
+    await initDbWithRetry();
     app.listen(PORT, () => {
       console.log(`Servidor escuchando en puerto ${PORT}`);
     });
