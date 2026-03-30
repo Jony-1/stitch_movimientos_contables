@@ -41,9 +41,52 @@ function resolveSslConfig() {
   return { rejectUnauthorized: false };
 }
 
-const pool = new Pool({
-  connectionString,
-  ssl: resolveSslConfig(),
-});
+function createPool(ssl) {
+  return new Pool({
+    connectionString,
+    ssl,
+  });
+}
 
-module.exports = pool;
+function shouldRetryWithoutSsl(error, ssl) {
+  return ssl !== false && /does not support ssl connections/i.test(String(error?.message || ""));
+}
+
+let currentSsl = resolveSslConfig();
+let pool = createPool(currentSsl);
+
+async function rebuildPoolWithoutSsl() {
+  currentSsl = false;
+  try {
+    await pool.end();
+  } catch (_) {}
+  pool = createPool(false);
+}
+
+async function query(text, params) {
+  try {
+    return await pool.query(text, params);
+  } catch (error) {
+    if (!shouldRetryWithoutSsl(error, currentSsl)) {
+      throw error;
+    }
+
+    await rebuildPoolWithoutSsl();
+    return pool.query(text, params);
+  }
+}
+
+async function connect() {
+  try {
+    return await pool.connect();
+  } catch (error) {
+    if (!shouldRetryWithoutSsl(error, currentSsl)) {
+      throw error;
+    }
+
+    await rebuildPoolWithoutSsl();
+    return pool.connect();
+  }
+}
+
+module.exports = { query, connect, end: () => pool.end() };
